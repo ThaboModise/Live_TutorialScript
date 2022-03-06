@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<canvas id="canvas"></canvas>
+<body>
+    <script type="module">
+        import * as THREE from "./three.js-master/build/three.module.js";
+        import { GUI } from "./three.js-master/examples/jsm/libs/dat.gui.module.js";
+
+        const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        const camera = new THREE.PerspectiveCamera(45, parseInt(window.getComputedStyle(canvas).getPropertyValue("width")) / parseInt(window.getComputedStyle(canvas).getPropertyValue("height")), 1.0, 1000);
+        const scene = new THREE.Scene();
+
+        const light = new THREE.PointLight();
+        const light2 = new THREE.PointLight();
+
+        const bgCubeGeo = new THREE.BoxGeometry(20,15,30);
+        const bgCubeMat = new THREE.MeshStandardMaterial({color: 0x0044ff, metalness: 0.8,roughness: 0.8, side: THREE.BackSide});
+        const bgCubeMesh = new THREE.Mesh(bgCubeGeo, bgCubeMat);
+
+        const icosaGeo = new THREE.IcosahedronGeometry(0.5,1);
+        const icosaMat = new THREE.MeshBasicMaterial({color: 0x00ffff, side: THREE.DoubleSide});
+        const icosaMesh = new THREE.Mesh(icosaGeo, icosaMat);
+
+        const torusGeo = new THREE.TorusGeometry(0.5, 0.25, 10, 10, Math.PI);
+        const torusMat = new THREE.MeshLambertMaterial({color: 0xff00ff,side: THREE.DoubleSide});
+        const torusMesh = new THREE.Mesh(torusGeo, torusMat);
+        
+        const sphereGeo = new THREE.SphereGeometry(0.5);
+        const sphereMat = new THREE.MeshPhongMaterial({color: 0xff5a00, side: THREE.DoubleSide});
+        const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+
+        const cylinderGeo = new THREE.CylinderGeometry(0.5,0.5,1);
+        const cylinderMat = new THREE.MeshStandardMaterial({color: 0xffff00, side: THREE.DoubleSide});
+        const cylinderMesh = new THREE.Mesh(cylinderGeo, cylinderMat);
+
+        const toonGeo = new THREE.SphereGeometry(0.5);
+        const toonMat = new THREE.MeshToonMaterial({color: 0x00ff00, side: THREE.DoubleSide});
+        const toonMesh = new THREE.Mesh(toonGeo, toonMat);
+
+        scene.add(icosaMesh);
+        scene.add(torusMesh);
+        scene.add(sphereMesh);
+        scene.add(cylinderMesh);
+        scene.add(toonMesh);
+        //scene.add(light);
+        scene.add(light2);
+
+        icosaMesh.position.y = 6;
+        torusMesh.position.y = 4.5;
+        sphereMesh.position.y = 3;
+        cylinderMesh.position.y = 1.5;
+
+        light.position.y = 6
+        light.position.z = -3;
+        light.position.x = 3;
+
+        light2.position.y = 6
+        light2.position.z = 10;
+        light2.position.x = -3;
+
+        camera.position.y = 3.5;
+        camera.position.z = 11;
+        camera.lookAt(new THREE.Vector3(0,3,0));
+
+        const gui = new GUI();
+
+        
+
+        const  alphaMapArray = [];
+
+        const mapObj = {
+            none: null,
+            alphaMap: new THREE.TextureLoader().load("connectedDots_mask.jpg"),
+        }
+
+        for (const key in mapObj) {
+           if (mapObj.hasOwnProperty(key)) {
+               alphaMapArray.push(key);
+           }
+           
+        }
+
+        const icosaData ={
+            radius:0.5,
+            detail:1,
+            color: "#ffffff",
+            alphaMap: alphaMapArray[0],
+            transparent: false,
+            alphaTest: 0,
+            scale:1,
+        }
+
+        const icosahedronFolder = gui.addFolder("THREE.MeshBasicMaterial_Icosahedron");
+        icosahedronFolder.add(icosaMesh.position,"x",-10,10);
+        icosahedronFolder.add(icosaMesh.position,"y",-10,10);
+        icosahedronFolder.add(icosaMesh.position,"z",-10,10);
+        icosahedronFolder.add(icosaData,"scale",1,10).onChange((value)=>{icosaMesh.scale.set(value,value,value)});
+        icosahedronFolder.addColor(icosaData,"color").onChange((value)=>{icosaMesh.material.color.set(value)});
+        icosahedronFolder.add(icosaData,"alphaMap",alphaMapArray).onChange((value)=>{
+            icosaMat.alphaMap = mapObj[value];
+            icosaMat.needsUpdate = true;
+        });
+        icosahedronFolder.add(icosaMesh.material,"wireframe",0,1);
+        icosahedronFolder.add(icosaData,"transparent",0,1).onChange((value)=>{
+            icosaMat.transparent = value;
+        });
+        icosahedronFolder.add(icosaData,"alphaTest",0,1).onChange((value)=>{
+            icosaMat.alphaTest = value;
+        });
+
+        const torusData ={
+            
+            color: "#ffffff",
+            emissive: torusMesh.material.emissive.getHex(),
+            scale:1,
+        };
+
+        const torusFolder = gui.addFolder("THREE.MeshLambertMaterial_Torus");
+        torusFolder.add(torusMesh.position,"x",-10,10);
+        torusFolder.add(torusMesh.position,"y",-10,10);
+        torusFolder.add(torusMesh.position,"z",-10,10);
+        torusFolder.add(torusData,"scale",1,10).onChange((value)=>{torusMesh.scale.set(value,value,value)});
+        torusFolder.addColor(torusData,"color").onChange((value)=>{torusMesh.material.color.set(value)});
+        torusFolder.addColor(torusData,"emissive").onChange((value)=>{torusMesh.material.emissive = new THREE.Color(value)});
+        torusFolder.add(torusMesh.material,"wireframe",0,1);
+
+        const bumpMapList = [];
+
+        const bMapObj = {
+            default: null,
+            bMapTex: new THREE.TextureLoader().load("connectedDots_mask.jpg")
+        }
+
+        for (const key in bMapObj) {
+            if (bMapObj.hasOwnProperty(key)) {
+                bumpMapList.push(key); 
+            }
+        }
+
+        const sphereData ={
+            
+            color: "#ffffff",
+            emissive: sphereMesh.material.emissive.getHex(),
+            specular: sphereMesh.material.specular.getHex(),
+            bumpMap: bumpMapList[ 0 ],
+            bumpScale:0,
+            flatShading: false,
+            alphaMap: alphaMapArray[0],
+            transparent: false,
+            alphaTest: 0,
+            scale:1,
+            
+        };
+
+        const sphereFolder = gui.addFolder("THREE.MeshPhongMaterial_Sphere");
+        sphereFolder.add(sphereMesh.position,"x",-10,10);
+        sphereFolder.add(sphereMesh.position,"y",-10,10);
+        sphereFolder.add(sphereMesh.position,"z",-10,10);
+        sphereFolder.add(sphereData,"scale",1,10).onChange((value)=>{sphereMesh.scale.set(value,value,value)});
+        sphereFolder.addColor(sphereData,"color").onChange((value)=>{sphereMesh.material.color.set(value)});
+        sphereFolder.addColor(sphereData,"emissive").onChange((value)=>{sphereMesh.material.emissive = new THREE.Color(value)});
+        sphereFolder.addColor(sphereData,"specular").onChange((value)=>{sphereMesh.material.specular = new THREE.Color(value)});
+        sphereFolder.add(sphereData,"bumpMap",bumpMapList).onChange((value)=>{sphereMat.bumpMap = bMapObj[value];
+            sphereMat.needsUpdate = true;
+        });
+        sphereFolder.add(sphereData,"alphaMap",alphaMapArray).onChange((value)=>{
+            sphereMat.alphaMap = mapObj[value];
+            sphereMat.needsUpdate = true;
+        });
+        sphereFolder.add(sphereData,"transparent",0,1).onChange((value)=>{
+            sphereMat.transparent = value;
+        });
+        sphereFolder.add(sphereData,"alphaTest",0,1).onChange((value)=>{
+            sphereMat.alphaTest = value;
+        });
+        sphereFolder.add(sphereData,"bumpScale", -1, 1).onChange((value)=>{sphereMesh.material.bumpScale = value});
+        sphereFolder.add(sphereMesh.material,"shininess",0,100);
+        sphereFolder.add(sphereMesh.material,"wireframe",0,1);
+        sphereFolder.add(sphereData,"flatShading", 0, 1).onChange((value)=>{sphereMesh.material.flatShading = value;
+            sphereMesh.material.needsUpdate = true;
+        });
+
+        const cylinderData ={
+            color: "#ffffff",
+            emissive: sphereMesh.material.emissive.getHex(),
+            specular: sphereMesh.material.specular.getHex(),
+            bumpMap: bumpMapList[ 0 ],
+            bumpScale:0,
+            flatShading: false,
+            metalness: 0,
+            roughness: 0,
+            alphaMap: alphaMapArray[0],
+            transparent: false,
+            alphaTest: 0,
+            scale:1,
+
+        };
+
+        
+        const cylinderFolder = gui.addFolder("THREE.MeshStandard_Cylinder");
+        cylinderFolder.add(cylinderMesh.position,"x",-10,10);
+        cylinderFolder.add(cylinderMesh.position,"y",-10,10);
+        cylinderFolder.add(cylinderMesh.position,"z",-10,10);
+        cylinderFolder.add(cylinderData,"scale",1,10).onChange((value)=>{cylinderMesh.scale.set(value,value,value)});
+
+        cylinderFolder.addColor(cylinderData,"color").onChange((value)=>{cylinderMesh.material.color.set(value)});
+        cylinderFolder.addColor(cylinderData,"emissive").onChange((value)=>{cylinderMesh.material.emissive = new THREE.Color(value)});
+        cylinderFolder.addColor(cylinderData,"specular").onChange((value)=>{cylinderMesh.material.specular = new THREE.Color(value)});
+        cylinderFolder.add(cylinderData,"bumpMap",bumpMapList).onChange((value)=>{cylinderMat.bumpMap = bMapObj[value];
+            cylinderMat.needsUpdate = true;
+        });
+        cylinderFolder.add(cylinderData,"bumpScale", -1, 1).onChange((value)=>{cylinderMesh.material.bumpScale = value});
+        cylinderFolder.add(cylinderData,"metalness",0,1).onChange((value)=>{
+            cylinderMat.metalness = value;
+        });
+        cylinderFolder.add(cylinderData,"roughness",0,1).onChange((value)=>{
+            cylinderMat.roughness = value;
+        });
+        cylinderFolder.add(cylinderData,"alphaMap",alphaMapArray).onChange((value)=>{
+            cylinderMat.alphaMap = mapObj[value];
+            cylinderMat.needsUpdate = true;
+        });
+        cylinderFolder.add(cylinderData,"transparent",0,1).onChange((value)=>{
+            cylinderMat.transparent = value;
+        });
+        cylinderFolder.add(cylinderData,"alphaTest",0,1).onChange((value)=>{
+            cylinderMat.alphaTest = value;
+        });
+        cylinderFolder.add(cylinderMesh.material,"wireframe",0,1);
+        cylinderFolder.add(cylinderData,"flatShading", 0, 1).onChange((value)=>{cylinderMesh.material.flatShading = value;
+            cylinderMesh.material.needsUpdate = true;
+        });
+
+        const toneMapList = [];
+
+        const toneMapObj = ()=>{
+            const threeTone = new THREE.TextureLoader().load("threeTone.jpg");
+            threeTone.minFilter = THREE.NearestFilter;
+            threeTone.magFilter = THREE.NearestFilter;
+
+            const fiveTone = new THREE.TextureLoader().load("fiveTone.jpg");
+            fiveTone.minFilter = THREE.NearestFilter;
+            fiveTone.magFilter = THREE.NearestFilter;
+
+            return{
+                none:null,
+                threeTone: threeTone,
+                fiveTone: fiveTone
+            }
+                
+        }
+
+        const toneMaps = toneMapObj();
+
+        for (const key in toneMaps) {
+            if (toneMaps.hasOwnProperty(key)) {
+                toneMapList.push(key); 
+            }
+        }
+
+        const toonData ={
+            color: "#ffffff",
+            emissive: sphereMesh.material.emissive.getHex(),
+            specular: sphereMesh.material.specular.getHex(),
+            gradientMap: toneMapList[ 0 ],
+            scale:1,
+        };
+
+        const toonFolder = gui.addFolder("THREE.MeshToon_Sphere");
+        toonFolder.add(toonMesh.position,"x",-10,10);
+        toonFolder.add(toonMesh.position,"y",-10,10);
+        toonFolder.add(toonMesh.position,"z",-10,10);
+        toonFolder.add(toonData,"scale",1,10).onChange((value)=>{toonMesh.scale.set(value,value,value)});
+        
+        toonFolder.addColor(toonData,"color").onChange((value)=>{toonMesh.material.color.set(value)});
+        toonFolder.addColor(toonData,"emissive").onChange((value)=>{toonMesh.material.emissive = new THREE.Color(value)});
+        toonFolder.addColor(toonData,"specular").onChange((value)=>{toonMesh.material.specular = new THREE.Color(value)});
+        toonFolder.add(toonData,"gradientMap", toneMapList).onChange((value)=>{
+            toonMesh.material.gradientMap = toneMaps[value];
+            toonMesh.material.needsUpdate = true;
+        });
+        toonFolder.add(toonMesh.material,"vertexColors",0,1);
+        toonFolder.add(toonMesh.material,"wireframe",0,1);
+
+        function render(){
+            renderer.render(scene, camera);
+            requestAnimationFrame(render);
+        }
+
+        render();
+
+        
+
+    </script>
+    
+</body>
+</html>
