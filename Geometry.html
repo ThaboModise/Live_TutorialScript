@@ -236,7 +236,9 @@
         
         function render(){
             camera.lookAt(scene.position);
+            
             boxMesh.rotation.y += 0.01;
+            boxMesh.geometry.parameters.depthSegments = 1;
 
             renderer.render(scene,camera);
         }
