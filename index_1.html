@@ -10,7 +10,7 @@
     <canvas id="canvas"></canvas>
     <script type="module">
         import * as THREE from "./three.js-master/build/three.module.js";
-        import { GUI } from "./three.js-master/examples/jsm/libs/dat.gui.module.js";
+        import { GUI } from "./three.js-master/examples/jsm/libs/lil-gui.module.min.js";
 
         const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
         renderer.setSize(window.innerWidth, window.innerHeight);

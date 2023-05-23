@@ -20,7 +20,7 @@
         }
     </script>
     <script type="module">
-        import * as THREE  from "./three.js-master/build/three.module.js";
+        import * as THREE  from "three";
         import { OrbitControls } from "./three.js-master/examples/jsm/controls/OrbitControls.js";
 
         const renderer = new THREE.WebGLRenderer();
@@ -40,7 +40,7 @@
             new THREE.OctahedronGeometry(), 
             new THREE.IcosahedronGeometry(),
             new THREE.TorusGeometry(),
-            new THREE.CapsuleGeometry(),
+            new THREE.CapsuleGeometry(0.5),
             new THREE.DodecahedronGeometry(),
             new THREE.TetrahedronGeometry(),
             new THREE.TorusKnotGeometry()
