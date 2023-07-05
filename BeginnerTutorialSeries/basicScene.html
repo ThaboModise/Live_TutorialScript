@@ -7,6 +7,16 @@
     <title>Document</title>
 </head>
 <body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
     <canvas id="canvas"></canvas>
     <script type="module">
         import * as THREE from "../three.js-master/build/three.module.js";
