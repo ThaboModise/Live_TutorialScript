@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE  from "three";
+        import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import { OutlinePass } from "../three.js-master/examples/jsm/postprocessing/OutlinePass.js";
+        import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+        import { ShaderPass } from "../three.js-master/examples/jsm/postprocessing/ShaderPass.js";
+        import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+        import { LightningStrike } from 'three/addons/geometries/LightningStrike.js';
+
+        const renderer = new THREE.WebGLRenderer({canvas:canvas, antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);         
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.physicallyCorrectLights = true;
+       
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry, new THREE.MeshStandardMaterial({color: 0xffffff, metalness: 1}));
+        floor.receiveShadow = true;
+        scene.add(floor);
+        floor.rotation.x = Math.PI * -0.5;
+        floor.scale.set(50, 50, 50);
+        floor.position.y = -1;
+        
+        const cubeGeo = new THREE.DodecahedronGeometry();
+        
+        const cube1 = new THREE.Mesh(cubeGeo, new THREE.MeshStandardMaterial({color:0xffffff, metalness: 1, wireframe: true, emissive: 0xaa0000 }));
+        const cube2 = new THREE.Mesh(cubeGeo, new THREE.MeshStandardMaterial({color:0xffffff, metalness: 1, wireframe: true, emissive: 0x00aa00 }));
+        const cube3 = new THREE.Mesh(cubeGeo, new THREE.MeshStandardMaterial({color:0xffffff, metalness: 1, wireframe: true, emissive: 0x0000aa }));
+
+        cube1.castShadow = cube2.castShadow = cube3.castShadow = true;
+
+        scene.add(cube1, cube2, cube3);
+
+        const light = new THREE.PointLight(0x00ffff);
+        light.castShadow = true;
+        scene.add(light);
+
+        light.shadow.mapSize.width = 512; 
+        light.shadow.mapSize.height = 512; 
+        light.shadow.camera.near = 0.5; 
+        light.shadow.camera.far = 500;
+
+        light.position.y = 15;
+        light.position.y = 20;
+
+        function createOutline( scene, objectsArray) {
+
+            const outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera, objectsArray );
+            outlinePass.edgeStrength = 2;
+            outlinePass.edgeGlow = 2.5;
+            outlinePass.edgeThickness = 1;
+            outlinePass.visibleEdgeColor.set(0x00aaff);
+            composer.addPass( outlinePass );
+            return outlinePass;
+
+        }
+
+
+        const rayParams1 = {
+            sourceOffset: new THREE.Vector3(),
+            destOffset: new THREE.Vector3(),
+            radius0: 0.05,
+            radius1: 0.05,
+            minRadius: 2.5,
+            maxIterations: 7,
+            isEternal: true,
+
+            timeScale: 0.7,
+
+            propagationTimeFactor: 0.05,
+            vanishingTimeFactor: 0.95,
+            subrayPeriod: 2.5,
+            subrayDutyCycle: 0.3,
+            maxSubrayRecursion: 3,
+            ramification: 7,
+            recursionProbability: 0.6,
+
+            roughness: 0.85,
+            straightness: 0.68
+        }
+
+        const rayParams2 = {
+            sourceOffset: new THREE.Vector3(),
+            destOffset: new THREE.Vector3(),
+            radius0: 0.05,
+            radius1: 0.05,
+            minRadius: 2.5,
+            maxIterations: 7,
+            isEternal: true,
+
+            timeScale: 0.7,
+
+            propagationTimeFactor: 0.05,
+            vanishingTimeFactor: 0.95,
+            subrayPeriod: 2.5,
+            subrayDutyCycle: 0.3,
+            maxSubrayRecursion: 3,
+            ramification: 7,
+            recursionProbability: 0.6,
+
+            roughness: 0.85,
+            straightness: 0.68
+        }
+
+        const rayParams3 = {
+            sourceOffset: new THREE.Vector3(),
+            destOffset: new THREE.Vector3(),
+            radius0: 0.05,
+            radius1: 0.05,
+            minRadius: 2.5,
+            maxIterations: 7,
+            isEternal: true,
+
+            timeScale: 0.7,
+
+            propagationTimeFactor: 0.05,
+            vanishingTimeFactor: 0.95,
+            subrayPeriod: 2.5,
+            subrayDutyCycle: 0.3,
+            maxSubrayRecursion: 3,
+            ramification: 7,
+            recursionProbability: 0.6,
+
+            roughness: 0.85,
+            straightness: 0.68
+        }
+
+        let lightningStrike, lightningStrike2, lightningStrike3;
+        let lightningStrikeMesh, lightningStrikeMesh2, lightningStrikeMesh3;
+
+        const outlineMeshArray = [];
+
+        function recreateRay(){
+            
+            lightningStrike = new LightningStrike( rayParams1 );
+            lightningStrikeMesh = new THREE.Mesh( lightningStrike, new THREE.MeshBasicMaterial({color: 0xffffff}) );
+
+            lightningStrike2 = new LightningStrike( rayParams2 );
+            lightningStrikeMesh2 = new THREE.Mesh( lightningStrike2, new THREE.MeshBasicMaterial({color: 0xffffff}) );
+
+            lightningStrike3 = new LightningStrike( rayParams3 );
+            lightningStrikeMesh3 = new THREE.Mesh( lightningStrike3, new THREE.MeshBasicMaterial({color: 0xffffff}) );
+
+            outlineMeshArray.push( lightningStrikeMesh);
+            outlineMeshArray.push( lightningStrikeMesh2);
+            outlineMeshArray.push( lightningStrikeMesh3);
+
+            scene.add( lightningStrikeMesh, lightningStrikeMesh2, lightningStrikeMesh3);
+        }
+
+
+        const composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        recreateRay();
+        createOutline(scene, outlineMeshArray, new THREE.Color(0x0000ff));
+
+
+
+
+        camera.position.z = 20;
+        camera.position.y = 3.75;
+        camera.lookAt(scene.position);
+
+        function onWindowResize(){
+            
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        window.addEventListener("resize", onWindowResize);
+        
+        let t = 0;
+
+        function render(){
+            t += 0.01;
+
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            let offset = 0;
+            
+            [cube1, cube2, cube3].map((obj)=>{
+                obj.rotation.x  = t + offset;
+                obj.rotation.y  = t + offset;
+                offset++;
+            })
+
+            cube1.position.set(-10, Math.abs(Math.sin(t + 0.1) * 5), 5);
+            cube2.position.set(0, Math.abs(Math.sin(t + 0.9) * 5), -12.5);
+            cube3.position.set(10, Math.abs(Math.sin(t  + 1.8) * 5), 5);
+
+            if (lightningStrike && lightningStrike2 && lightningStrike3) {
+
+                lightningStrike.rayParameters.sourceOffset.copy( cube1.position );
+                lightningStrike.rayParameters.destOffset.copy( cube2.position );
+
+                lightningStrike2.rayParameters.sourceOffset.copy( cube2.position );
+                lightningStrike2.rayParameters.destOffset.copy( cube3.position );
+
+                lightningStrike3.rayParameters.sourceOffset.copy( cube3.position );
+                lightningStrike3.rayParameters.destOffset.copy( cube1.position );
+
+                lightningStrike.update(t);
+                lightningStrike2.update(t);
+                lightningStrike3.update(t);
+            }
+        
+            light.intensity = Math.random() * 1000;
+            //renderer.render(scene, camera); 
+            composer.render();
+        }
+
+        function animate(){
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

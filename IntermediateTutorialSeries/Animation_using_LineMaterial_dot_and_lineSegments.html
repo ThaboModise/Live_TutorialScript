@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE  from "../three.js-master/build/three.module.js";
+		import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import { UnrealBloomPass } from "../three.js-master/examples/jsm/postprocessing/UnrealBloomPass.js";
+        import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+        import { ShaderPass } from "../three.js-master/examples/jsm/postprocessing/ShaderPass.js";
+        import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+        import { CopyShader } from "../three.js-master/examples/jsm/shaders/CopyShader.js";
+
+        const renderer = new THREE.WebGLRenderer({canvas:canvas, antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x000000);
+        
+        const camera = new THREE.PerspectiveCamera(45,parseInt(window.getComputedStyle(canvas).getPropertyValue("width"))/ parseInt(window.getComputedStyle(canvas).getPropertyValue("height")),0.1,1000);
+        const scene = new THREE.Scene();
+        
+        const renderPass = new RenderPass(scene, camera);
+
+        const composer = new EffectComposer(renderer);
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.4, 0.2, 0.1 );
+       
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+
+        const arcShape = new THREE.Shape()
+					.moveTo( 0, 0 )
+					.absarc( 0, 0, 1, 0, Math.PI * 2, false );
+
+        let lineGRP = [];
+
+        function addLineShape( shape, color, x, y, z, rx, ry, rz, s, dash = false, line = false) {
+
+            // lines
+
+            shape.autoClose = true;
+
+            const points = shape.getPoints();
+            console.log("points:", points);
+            const spacedPoints = shape.getSpacedPoints( 50 );
+
+            const geometryPoints = new THREE.BufferGeometry().setFromPoints( points );
+            const geometrySpacedPoints = new THREE.BufferGeometry().setFromPoints( spacedPoints );
+
+            // solid line
+            if
+            (dash) {
+
+                let line = new THREE.LineSegments( geometrySpacedPoints, new THREE.LineDashedMaterial( { color: color, dashSize: 1, gapSize: 1, scale:3} ) );
+                //let line = new THREE.Line( geometrySpacedPoints, new THREE.LineBasicMaterial( { color: color, lineWidth:5} ) );
+                line.computeLineDistances();
+                line.position.set( x, y, z );
+                line.rotation.set( rx, ry, rz );
+                line.scale.set( s, s, s );
+                lineGRP.push(line);
+                scene.add( line );
+            
+            }
+            else if (line) {
+                let line = new THREE.Line( geometrySpacedPoints, new THREE.LineBasicMaterial( { color: color, lineWidth:5} ) );
+                line.computeLineDistances();
+                line.position.set( x, y, z );
+                line.rotation.set( rx, ry, rz );
+                line.scale.set( s, s, s );
+                lineGRP.push(line);
+                scene.add( line );
+            }
+            else{
+                let line = new THREE.Points( geometrySpacedPoints, new THREE.PointsMaterial( { color: color, size: 0.15 } ) );
+                
+                line.position.set( x, y, z );
+                line.rotation.set( rx, ry, rz );
+                line.scale.set( s, s, s );
+                lineGRP.push(line);
+                scene.add( line );
+            }
+
+        }
+
+        for (let i = 0; i < 12; i++) {
+            if (i % 2 === 0) {
+                addLineShape(arcShape, 0x000BFF, 0, 0, 0, 0, 0, 0, 0/*(0.3 + i) / 12*/, true);  
+            }
+
+            if (i % 3 === 0) {
+                addLineShape(arcShape, 0x000BFF, 0, 0, 0, 0, 0, 0, 0/*(0.3 + i) / 12*/, false, true);  
+            }
+            else{
+                addLineShape(arcShape,0xFF6000, 0, 0, 0, 0, 0, 0, 0/*(0.3 + i) / 12*/);
+            }
+                 
+            //addLineShape(arcShape, 0xFF6000, 0, 0, 0, 0, 0, 0, (5 + i) / 12, false, false);  
+
+        }
+
+       
+        camera.position.z = 10;
+        camera.position.y = 0;
+        camera.lookAt(scene.position);
+       
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        orbit.update();
+        orbit.addEventListener("change", render);
+       
+        function onWindowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener("resize", onWindowResize);
+
+        let time = 0;
+        function render(){
+            time += 0.01;
+            
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            for (let i = 0; i < lineGRP.length; i++) {
+                lineGRP[i].position.z = Math.sin((time + i * 0.6 )) + 4;
+                //lineGRP[i].position.y = Math.sin((time + i * 0.2 ));
+                //lineGRP[i].rotation.x = Math.PI * 0.5;
+                lineGRP[i].rotation.x = Math.sin(time * (Math.PI * 0.5));
+                //lineGRP[i].rotation.y = Math.sin(time * (Math.PI * 0.5));
+                lineGRP[i].rotation.z = Math.sin(time * (Math.PI * 0.5));
+                lineGRP[i].rotation.y = Math.sin(time + i * 0.1);
+                //lineGRP[i].rotation.y = (Math.sin(time * 0.7) * i) * 0.2;
+                lineGRP[i].rotation.z = Math.abs(Math.sin(time + i * 0.2));
+                //lineGRP[i].rotation.z = ((time * 0.3) * i) / 2;
+                //lineGRP[i].scale.set(Math.abs(Math.sin(time) * (i / 9)) + (0.3 * (i / 1.5)) + 0.3, Math.abs(Math.sin(time) * (i / 9)) + (0.3 * (i / 1.5)) + 0.3, Math.abs(Math.sin(time) * (i / 9)) + (0.3 * (i / 1.5)) + 0.3);
+                lineGRP[i].scale.set(Math.sin(time) * (i / 9) + (0.3 * (i / 1.5)) + 0.3, Math.sin(time) * (i / 9) + (0.3 * (i / 1.5)) + 0.3, Math.sin(time) * (i / 9) + (0.3 * (i / 1.5)) + 0.3);
+
+            }
+           
+            composer.render(scene, camera);
+        }
+
+        function animate(){
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+        
+    </script>
+    
+</body>
+</html>

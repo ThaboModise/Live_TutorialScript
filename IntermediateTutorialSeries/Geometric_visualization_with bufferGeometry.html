@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <script src="../es_module_shims/es_module_shims.js"></script>
+    <script type="importmap">
+        {
+				"imports": {
+					"three": "../three.js-master/build/three.module.js",
+					"three/addons/": "../three.js-master/examples/jsm/"
+				}
+        }
+    </script>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls} from "three/addons/controls/OrbitControls.js";
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xaaaaaa);
+        const pointLight_1 = new THREE.PointLight();
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1.0, 1000);
+
+        const geo = new THREE.PlaneGeometry(1,5,10,100);
+        const mat = new THREE.MeshStandardMaterial({color: 0xffbbbb,emissive: 0x00aa00, side: THREE.DoubleSide});
+
+        const pos = geo.attributes.position.array;
+        const indices = [];
+ 
+        const buffGeo = new THREE.BufferGeometry();
+
+        for (let i = 0; i < geo.index.array.length; i++) {
+            indices.push(geo.index.array[`${i}`]);
+        }
+
+        buffGeo.setIndex(indices);
+        buffGeo.setAttribute("position", new THREE.Float32BufferAttribute(pos,3));
+
+        const mesh = new THREE.Mesh(buffGeo,mat);
+        const mesh_2 = mesh.clone();
+
+        scene.add(mesh);
+        scene.add(mesh_2)
+        scene.add(pointLight_1);
+
+        pointLight_1.position.y = 10;
+
+        mesh.rotation.x = Math.PI * -0.5;
+        mesh_2.rotation.x = Math.PI * -0.5;
+
+        camera.lookAt(scene.position);
+        camera.position.z = 10;
+        camera.position.y = 0;
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.update();
+
+        let t = 0;
+        
+         function render(){
+            t+= 0.0001;
+
+            pointLight_1.position.x = Math.sin(t) * 20;
+            pointLight_1.position.z = Math.cos(t) * 10;
+
+            scene.background = new THREE.Color(Math.sin(t) * 0xffffff);
+            mesh.material.emissive = new THREE.Color(Math.sin(t) * 0xffffff);
+
+            mesh.rotation.y += 0.01;
+            mesh_2.rotation.y += 0.01;
+            mesh.scale.set(Math.abs(Math.sin(t) * 1.5 + 1),Math.abs(Math.cos(t) * 1.5 + 1),Math.abs(Math.sin(t) * 1.5 + 1));
+            mesh_2.scale.set(Math.abs(Math.sin(t * 5) * 5 + 2),Math.abs(Math.sin(t * 5) * 5 + 2),Math.abs(Math.sin(t * 5) * 5 + 2));
+
+            for (let i = 0; i < pos.length; i+= 3) {
+                
+                 mesh.geometry.attributes.position.array[`${i}`] = Math.sin((t * i) / 0.3);
+                 mesh.geometry.attributes.position.array[`${i + 1}`] = Math.cos((t * i) / 0.2);
+                 mesh.geometry.attributes.position.array[`${i + 2}`] = Math.cos((t * i) / 0.3);
+                  
+             }
+
+            mesh.geometry.attributes.position.needsUpdate = true;
+            mesh.geometry.computeVertexNormals();
+
+            renderer.render(scene, camera);
+
+            requestAnimationFrame(render);
+         }
+
+        render();
+        
+        
+
+    </script>
+    
+</body>
+</html>

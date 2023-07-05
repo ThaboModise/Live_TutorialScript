@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE from  "../three.js-master/build/three.module.js";
+        import { OrbitControls } from  "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import { OBJLoader } from  "../three.js-master/examples/jsm/loaders/OBJLoader.js";
+        import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+        import { ShaderPass } from "../three.js-master/examples/jsm/postprocessing/ShaderPass.js";
+        import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+        import { OutlinePass } from "../three.js-master/examples/jsm/postprocessing/OutlinePass.js";
+        import { FXAAShader } from "../three.js-master/examples/jsm/shaders/FXAAShader.js";
+
+        
+        //Create webgl renderer, assign canvas element and adjust renderer settings
+        const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x000000);
+        
+        //Create perspective camera and add the necessary settings         
+        const camera = new THREE.PerspectiveCamera(45,parseInt(window.getComputedStyle(canvas).getPropertyValue("width")) / parseInt(window.getComputedStyle(canvas).getPropertyValue("height")),0.5, 1000);
+        
+        const scene = new THREE.Scene();
+
+        let INTERSECTED;
+
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+
+        const composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+
+        composer.addPass(renderPass);
+
+        const outline = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
+        outline.edgeThickness = 2.0;
+        outline.edgeStrength = 3.0;
+        outline.visibleEdgeColor.set(0xffffff);
+        
+        composer.addPass(outline);
+
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load("../three.js-master/examples/textures/tri_pattern.jpg", function(texture){
+            if (texture) {
+                outline.patternTexture = texture;
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+    
+            }
+            
+        });
+
+        const fxaaShader = new ShaderPass(FXAAShader);
+        fxaaShader.uniforms["resolution"].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+        composer.addPass(fxaaShader);
+
+        const selectedObjects = [];
+
+        function addSelectedObjects(object){
+            if (selectedObjects.length > 0) {
+                selectedObjects.pop();
+            }
+            selectedObjects.push(object);
+        }
+
+        function intersection(){
+            raycaster.setFromCamera(mouse,camera);
+            const intersects = raycaster.intersectObjects(scene.children, false);
+
+            if ( intersects.length > 0 ) {
+
+                if ( INTERSECTED != intersects[0].object && intersects[0].object.type === "Mesh" ) {
+
+                    INTERSECTED = intersects[0].object;
+                    addSelectedObjects(INTERSECTED);
+                    outline.selectedObjects = selectedObjects;
+
+                    //console.log(INTERSECTED);
+                    console.log(INTERSECTED.name);
+
+            }
+
+            } else {
+
+                INTERSECTED = null;
+
+            }
+        }
+
+
+        function mouseMove(){
+            event.preventDefault();
+            mouse.x = (event.clientX /  window.innerWidth) * 2 -1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            intersection();
+        }
+
+        //Create point-lights
+        const light = new THREE.PointLight();
+        const light2 = new THREE.PointLight();
+        const light3 = new THREE.PointLight();
+        
+        // Create head mesh
+        const headGeo = new THREE.BoxGeometry(0.233, 0.233, 0.23);
+        const headMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const head = new THREE.Mesh(headGeo, headMat);
+
+        // Create a right eye socket
+        const rightEyeSocketGeo = new THREE.TorusGeometry(0.1,0.026,8,24);
+        const rightEyeSocketMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightEyeSocket = new THREE.Mesh(rightEyeSocketGeo, rightEyeSocketMat);
+
+        // Create a left eye socket
+        const leftEyeSocketGeo = new THREE.TorusGeometry(0.1,0.026,8,24);
+        const leftEyeSocketMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftEyeSocket = new THREE.Mesh(leftEyeSocketGeo, leftEyeSocketMat);
+
+        // Create a right eye 
+        const rightEyeGeo = new THREE.SphereGeometry();
+        const rightEyeMat = new THREE.MeshStandardMaterial({color:0xFF6000, /*wireframe: true,*/ emissive: 0xff0000,});
+        const rightEye = new THREE.Mesh(rightEyeGeo, rightEyeMat);
+
+        // Create a left eye 
+        const leftEyeGeo = new THREE.SphereGeometry();
+        const leftEyeMat = new THREE.MeshStandardMaterial({color:0xFF6000, /*wireframe: true,*/ emissive: 0xff0000});
+        const leftEye = new THREE.Mesh(leftEyeGeo, leftEyeMat);
+
+        // Create nose mesh
+        const noseGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.05, 8, 2);
+        const noseMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const nose = new THREE.Mesh(noseGeo, noseMat);
+
+         // Create neck mesh
+         const neckGeo = new THREE.CylinderGeometry();
+        const neckMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const neck = new THREE.Mesh(neckGeo, neckMat);
+
+        // Create mouth
+        const mouthGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        const mouthMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const mouth = new THREE.Mesh(mouthGeo, mouthMat);
+
+        // Create head torso
+        const torsoGeo = new THREE.BoxGeometry(0.233, 0.233, 0.20);
+        const torsoMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const torso = new THREE.Mesh(torsoGeo, torsoMat);
+
+        // Create a right shoulderBallJoint
+        const rightShoulderBallJointGeo = new THREE.SphereGeometry();
+        const rightShoulderBallJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightShoulderBallJoint = new THREE.Mesh(rightShoulderBallJointGeo, rightShoulderBallJointMat);
+
+        // Create a left shoulderBallJoint
+        const leftShoulderBallJointGeo = new THREE.SphereGeometry();
+        const leftShoulderBallJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftShoulderBallJoint = new THREE.Mesh(leftShoulderBallJointGeo, leftShoulderBallJointMat);
+
+        // Create a rightShoulderRing
+        const rightShoulderRingGeo = new THREE.TorusGeometry(1, 0.5, 6, 32);
+        const rightShoulderRingMat = new THREE.MeshStandardMaterial({color:0xffffff, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const rightShoulderRing = new THREE.Mesh(rightShoulderRingGeo, rightShoulderRingMat);
+
+        // Create a leftShoulderRing
+        const leftShoulderRingGeo = new THREE.TorusGeometry(1, 0.5, 6, 32);
+        const leftShoulderRingMat = new THREE.MeshStandardMaterial({color:0xffffff, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const leftShoulderRing = new THREE.Mesh(leftShoulderRingGeo, leftShoulderRingMat);
+
+        // Create a rightUpperArm
+        const rightUpperArmGeo = new THREE.CylinderGeometry(0.033,0.028,0.32,22);
+        const rightUpperArmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightUpperArm = new THREE.Mesh(rightUpperArmGeo, rightUpperArmMat);
+
+        // Create a leftUpperArm
+        const leftUpperArmGeo = new THREE.CylinderGeometry(0.033,0.028,0.32,22);
+        const leftUpperArmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftUpperArm = new THREE.Mesh(leftUpperArmGeo, leftUpperArmMat);
+
+        // Create a right elbowBallJoint
+        const rightElbowBallJointGeo = new THREE.SphereGeometry();
+        const rightElbowBallJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightElbowBallJoint = new THREE.Mesh(rightElbowBallJointGeo, rightElbowBallJointMat);
+
+        // Create a left elbowBallJoint
+        const leftElbowBallJointGeo = new THREE.SphereGeometry();
+        const leftElbowBallJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftElbowBallJoint = new THREE.Mesh(leftElbowBallJointGeo, leftElbowBallJointMat);
+
+        // Create a spine column 1
+        const spineColumn_1Geo = new THREE.TorusGeometry(1, 0.3, 24, 32);
+        const spineColumn_1Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_1 = new THREE.Mesh(spineColumn_1Geo, spineColumn_1Mat);
+
+        // Create a spine column 2
+        const spineColumn_2Geo = new THREE.TorusGeometry(1, 0.3, 24, 32);
+        const spineColumn_2Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_2 = new THREE.Mesh(spineColumn_2Geo, spineColumn_2Mat);
+
+        // Create a spine column 3
+        const spineColumn_3Geo = new THREE.TorusGeometry(1, 0.3, 24, 32);
+        const spineColumn_3Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_3 = new THREE.Mesh(spineColumn_3Geo, spineColumn_3Mat);
+
+        // Create a spine column 4
+        const spineColumn_4Geo = new THREE.TorusGeometry(1, 0.3, 24, 32);
+        const spineColumn_4Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_4 = new THREE.Mesh(spineColumn_4Geo, spineColumn_4Mat);
+
+        // Create a spine column 5
+        const spineColumn_5Geo = new THREE.TorusGeometry(1, 0.25, 24, 32);
+        const spineColumn_5Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_5 = new THREE.Mesh(spineColumn_5Geo, spineColumn_5Mat);
+
+        // Create a spine column 6
+        const spineColumn_6Geo = new THREE.TorusGeometry(1, 0.2, 24, 32);
+        const spineColumn_6Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_6 = new THREE.Mesh(spineColumn_6Geo, spineColumn_6Mat);
+
+        // Create head pelvis
+        const pelvisGeo = new THREE.BoxGeometry(0.233, 0.233, 0.20);
+        const pelvisMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const pelvis = new THREE.Mesh(pelvisGeo, pelvisMat);
+
+        // Create a rightUpperLeg
+        const rightUpperLegGeo = new THREE.CylinderGeometry(0.031,0.017,0.16,22);
+        const rightUpperLegMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightUpperLeg = new THREE.Mesh(rightUpperLegGeo, rightUpperLegMat);
+
+        // Create a leftUpperLeg
+        const leftUpperLegGeo = new THREE.CylinderGeometry(0.031,0.017,0.16,22);
+        const leftUpperLegMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftUpperLeg = new THREE.Mesh(leftUpperLegGeo, leftUpperLegMat);
+
+        // Create a right knee joint
+        const rightKneeJointGeo = new THREE.SphereGeometry();
+        const rightKneeJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightKneeJoint = new THREE.Mesh(rightKneeJointGeo, rightKneeJointMat);
+
+        // Create a left knee joint
+        const leftKneeJointGeo = new THREE.SphereGeometry();
+        const leftKneeJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftKneeJoint = new THREE.Mesh(leftKneeJointGeo, leftKneeJointMat);
+
+        // Create a rightLowerLeg
+        const rightLowerLegGeo = new THREE.CylinderGeometry(0.015,0.01,0.22,22);
+        const rightLowerLegMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightLowerLeg = new THREE.Mesh(rightLowerLegGeo, rightLowerLegMat);
+
+        // Create a rightLowerLeg
+        const leftLowerLegGeo = new THREE.CylinderGeometry(0.015,0.01,0.22,22);
+        const leftLowerLegMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftLowerLeg = new THREE.Mesh(leftLowerLegGeo, leftLowerLegMat);
+
+        // Create a right ankle
+        const rightLegAnkleGeo = new THREE.CylinderGeometry(0.007,0.012,0.007,4);
+        const rightLegAnkleMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightLegAnkle = new THREE.Mesh(rightLegAnkleGeo, rightLegAnkleMat);
+
+        // Create a left ankle
+        const leftLegAnkleGeo = new THREE.CylinderGeometry(0.007,0.012,0.007,4);
+        const leftLegAnkleMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftLegAnkle = new THREE.Mesh(leftLegAnkleGeo, leftLegAnkleMat);
+
+        // Create right foot
+        const rightFootGeo = new THREE.BoxGeometry(0.12, 0.05, 0.25);
+        const rightFootMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightFoot = new THREE.Mesh(rightFootGeo, rightFootMat);
+
+        // Create left foot
+        const leftFootGeo = new THREE.BoxGeometry(0.12, 0.05, 0.25);
+        const leftFootMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftFoot = new THREE.Mesh(leftFootGeo, leftFootMat);
+
+        // Create a rightLowerArm
+        const rightLowerArmGeo = new THREE.CylinderGeometry(0.028,0.023,0.32,22);
+        const rightLowerArmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightLowerArm = new THREE.Mesh(rightLowerArmGeo, rightLowerArmMat);
+
+        // Create a leftLowerArm
+        const leftLowerArmGeo = new THREE.CylinderGeometry(0.028,0.023,0.32,22);
+        const leftLowerArmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftLowerArm = new THREE.Mesh(leftLowerArmGeo, leftLowerArmMat);
+
+        // Create a right wrist torus
+        const rightWristTorusGeo = new THREE.TorusGeometry(0.1,0.025,8,24);
+        const rightWristTorusMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightWristTorus = new THREE.Mesh(rightWristTorusGeo, rightWristTorusMat);
+
+        // Create a right wrist torus
+        const leftWristTorusGeo = new THREE.TorusGeometry(0.1,0.025,8,24);
+        const leftWristTorusMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftWristTorus = new THREE.Mesh(leftWristTorusGeo, leftWristTorusMat);
+
+        // Create right palm
+        const rightPalmGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const rightPalmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightPalm = new THREE.Mesh(rightPalmGeo, rightPalmMat);
+
+        // Create left palm
+        const leftPalmGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const leftPalmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftPalm = new THREE.Mesh(leftPalmGeo, leftPalmMat);
+
+        // Create right knuckles
+        const rightKnucklesGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const rightKnucklesMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightKnuckles = new THREE.Mesh(rightKnucklesGeo, rightKnucklesMat);
+
+        // Create left knuckles
+        const leftKnucklesGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const leftKnucklesMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftKnuckles = new THREE.Mesh(leftKnucklesGeo, leftKnucklesMat);
+
+        // Create right thumb base
+        const rightThumbBaseGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const rightThumbBaseMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightThumbBase = new THREE.Mesh(rightThumbBaseGeo, rightThumbBaseMat);
+
+        // Create left thumb base
+        const leftThumbBaseGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const leftThumbBaseMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftThumbBase = new THREE.Mesh(rightThumbBaseGeo, rightThumbBaseMat);
+
+        // Create a right fingers
+        const rightFingersGeo = new THREE.CylinderGeometry(0.023,0.021,0.09,4,2,false,0.8);
+        const rightFingersMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightFingers = new THREE.Mesh(rightFingersGeo, rightFingersMat);
+
+        // Create a left fingers
+        const leftFingersGeo = new THREE.CylinderGeometry(0.023,0.021,0.09,4,2,false,0.8);
+        const leftFingersMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftFingers = new THREE.Mesh(leftFingersGeo, leftFingersMat);
+
+        // Create a right thumb
+        const rightThumbGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const rightThumbMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightThumb = new THREE.Mesh(rightThumbGeo, rightThumbMat);
+
+        // Create a right thumb
+        const leftThumbGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const leftThumbMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftThumb = new THREE.Mesh(leftThumbGeo, leftThumbMat);
+
+        // Create a char top base
+        const charTopBaseGeo = new THREE.CylinderGeometry(1, 1, 1, 24);
+        const charTopBaseMat = new THREE.MeshStandardMaterial({color:0x009fbf, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const charTopBase = new THREE.Mesh(charTopBaseGeo, charTopBaseMat);
+
+        // Create a char bottom base
+        const charBottomBaseGeo = new THREE.CylinderGeometry(1, 1, 1, 24);
+        const charBottomBaseMat = new THREE.MeshStandardMaterial({color:0x009fbf, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const charBottomBase = new THREE.Mesh(charBottomBaseGeo, charBottomBaseMat);
+
+        //Create Dodecahedron as background
+        const backgroundGeo = new THREE.DodecahedronGeometry(5);
+        const backgroundMat = new THREE.MeshStandardMaterial({color:0x0055ff, emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.9, side: THREE.DoubleSide});
+        const background = new THREE.Mesh(backgroundGeo, backgroundMat);
+
+        let object;
+
+        function loadModel() {
+
+            object.traverse((child)=>{
+                if (child.isMesh) {
+                    switch (child.name) {
+                        case "Cape":
+                            child.material = new THREE.MeshStandardMaterial({color:0x000bff, metalness: 1, roughness: 0.4})
+                            break;
+                        case "Frame":
+                        child.material = new THREE.MeshStandardMaterial({color:0x144FE7, metalness: 1, roughness: 0.4})
+                        break;
+                        default:
+                            child.material = new THREE.MeshStandardMaterial({color:0xFF6000, emissive:0xff0000});
+                        break;
+                    }
+                    
+                }
+            
+            })
+
+            object.position.y = 1.625;
+            object.position.z = 0.171;
+            object.scale.set(0.017,0.017,0.017);
+
+            //console.log("object", object);
+            scene.add( object );
+
+        }   
+
+        const manager = new THREE.LoadingManager( loadModel );
+
+        function onProgress( xhr ) {
+
+            if ( xhr.lengthComputable ) {
+
+                const percentComplete = xhr.loaded / xhr.total * 100;
+                console.log( 'model ' + Math.round( percentComplete, 2 ) + '% downloaded' );
+
+            }
+
+        }
+
+        function onError() {console.log("Error has ocuured");}
+
+            const loader = new OBJLoader( manager );
+
+            loader.load( '../logo/superhero.obj', function ( obj ) {
+
+            object = obj;
+
+        }, onProgress, onError );
+
+        scene.add(light, light2, light3);
+       
+        scene.add(head);
+        scene.add(nose);
+        scene.add(mouth);
+        scene.add(rightEyeSocket, leftEyeSocket);
+        scene.add(rightEye, leftEye);
+        scene.add(nose);
+        scene.add(neck);
+        scene.add(torso);
+
+        /*if (object !== undefined) {
+            torso.attach(object);
+        }*/
+
+        scene.add(rightShoulderBallJoint, leftShoulderBallJoint); 
+        scene.add(rightShoulderRing, leftShoulderRing);    
+        scene.add(rightUpperArm, leftUpperArm);
+        scene.add(rightElbowBallJoint, leftElbowBallJoint);
+        scene.add(spineColumn_1, spineColumn_2, spineColumn_3, spineColumn_4, spineColumn_5, spineColumn_6);
+        scene.add(pelvis);
+        scene.add(rightUpperLeg, leftUpperLeg);
+        scene.add(rightKneeJoint, leftKneeJoint);
+        scene.add(rightLowerLeg, leftLowerLeg);
+        scene.add(rightLegAnkle, leftLegAnkle);
+        scene.add(rightFoot, leftFoot);
+        scene.add(rightLowerArm, leftLowerArm);
+        scene.add(rightWristTorus, leftWristTorus);
+        scene.add(rightPalm, leftPalm);
+        scene.add(rightKnuckles, leftKnuckles);
+        scene.add(leftThumbBase, rightThumbBase);
+        scene.add(rightThumb, leftThumb);
+        scene.add(leftFingers, rightFingers);
+        scene.add(charTopBase, charBottomBase);
+       
+        scene.add(background);
+
+        light.position.y = 0
+        light.position.x = 20
+        light.position.z = 30;
+        light.intensity = 0.6; 
+
+        light2.position.y = 0
+        light2.position.x = -20
+        light2.position.z = 30;
+        light2.intensity = 0.6;
+
+        light3.position.y = 2;
+        light3.position.z = -3;
+
+        head.position.y = 2.02;
+        head.scale.set(0.95, 1.18, 0.95);
+
+        rightEyeSocket.position.y = 2.045;
+        rightEyeSocket.position.x = 0.06;
+        rightEyeSocket.position.z = 0.11
+        rightEyeSocket.scale.set(0.28, 0.28, 0.28);
+
+        leftEyeSocket.position.y = 2.045;
+        leftEyeSocket.position.x = -0.06;
+        leftEyeSocket.position.z = 0.11
+        leftEyeSocket.scale.set(0.28, 0.28, 0.28);
+
+        rightEye.position.y = 2.045;
+        rightEye.position.x = 0.06;
+        rightEye.position.z = 0.105
+        rightEye.scale.set(0.025, 0.025, 0.025);
+
+        leftEye.position.y = 2.045;
+        leftEye.position.x = -0.06;
+        leftEye.position.z = 0.105
+        leftEye.scale.set(0.025, 0.025, 0.025);
+
+        nose.position.z = 0.115;
+        nose.position.y = 2.;
+        nose.scale.set(0.6, 1.1, 0.6);
+
+        mouth.position.y = 1.9375;
+        mouth.position.z = 0.1;
+        mouth.scale.set(0.3, 0.1, 0.2);
+
+        neck.position.y = 1.880;
+        neck.scale.set(0.04, 0.135, 0.04 );
+
+        torso.position.y = 1.62;
+        torso.scale.set(1.73, 1.8, 1.7);
+
+        rightShoulderBallJoint.position.y = 1.733;
+        rightShoulderBallJoint.position.x = 0.22;
+        rightShoulderBallJoint.scale.set(0.07,0.07,0.07);
+
+        leftShoulderBallJoint.position.y = 1.733;
+        leftShoulderBallJoint.position.x = -0.22;
+        leftShoulderBallJoint.scale.set(0.07,0.07,0.07);
+
+        rightShoulderRing.position.y = 1.731;
+        rightShoulderRing.position.x = 0.2;
+        rightShoulderRing.scale.set(0.06,0.06,0.06);
+        rightShoulderRing.rotation.y = Math.PI / 2;
+
+        leftShoulderRing.position.y = 1.731;
+        leftShoulderRing.position.x = -0.2;
+        leftShoulderRing.scale.set(0.06,0.06,0.06);
+        leftShoulderRing.rotation.y = Math.PI / 2;
+
+        rightUpperArm.position.y = 1.555;
+        rightUpperArm.position.x = 0.265;
+        rightUpperArm.position.z = 0.005;
+        rightUpperArm.rotation.z = Math.PI / 60;
+
+        leftUpperArm.position.y = 1.555;
+        leftUpperArm.position.x = -0.265;
+        leftUpperArm.position.z = 0.005;
+        leftUpperArm.rotation.z = Math.PI / -60;
+
+        rightElbowBallJoint.position.y = 1.395;
+        rightElbowBallJoint.position.x = 0.273;
+        rightElbowBallJoint.position.z = 0.006;
+        rightElbowBallJoint.scale.set(0.028,0.028,0.028);
+
+        leftElbowBallJoint.position.y = 1.395;
+        leftElbowBallJoint.position.x = -0.273;
+        leftElbowBallJoint.position.z = 0.006;
+        leftElbowBallJoint.scale.set(0.028,0.028,0.028);
+
+        spineColumn_1.rotation.x = Math.PI / 2;
+        spineColumn_1.scale.set(0.07,0.07,0.07);
+        spineColumn_1.position.y = 1.4;
+
+        spineColumn_2.rotation.x = Math.PI / 2;
+        spineColumn_2.scale.set(0.06,0.06,0.06);
+        spineColumn_2.position.y = 1.362;
+
+        spineColumn_3.rotation.x = Math.PI / 2;
+        spineColumn_3.scale.set(0.06,0.06,0.06);
+        spineColumn_3.position.y = 1.33;
+
+        spineColumn_4.rotation.x = Math.PI / 2;
+        spineColumn_4.scale.set(0.07,0.07,0.07);
+        spineColumn_4.position.y = 1.299;
+
+        spineColumn_5.rotation.x = Math.PI / 2;
+        spineColumn_5.scale.set(0.085,0.085,0.085);
+        spineColumn_5.position.y = 1.2635;
+
+        spineColumn_6.rotation.x = Math.PI / 2;
+        spineColumn_6.scale.set(0.1,0.1,0.1);
+        spineColumn_6.position.y = 1.23;
+
+        pelvis.position.y = 1.115;
+        pelvis.scale.set(1.73, 0.85, 1.7);
+
+        rightUpperLeg.scale.set(3,3,3);
+        rightUpperLeg.position.y = 0.8;
+        rightUpperLeg.position.x = 0.11;
+
+        leftUpperLeg.scale.set(3,3,3);
+        leftUpperLeg.position.y = 0.8;
+        leftUpperLeg.position.x = -0.11;
+
+        rightKneeJoint.scale.set(0.054, 0.054, 0.054);
+        rightKneeJoint.position.y = 0.538;
+        rightKneeJoint.position.x = 0.11;
+
+        leftKneeJoint.scale.set(0.054, 0.054, 0.054);
+        leftKneeJoint.position.y = 0.538;
+        leftKneeJoint.position.x = -0.11;
+
+        rightLowerLeg.scale.set(3,3,3);
+        rightLowerLeg.position.y = 0.2;
+        rightLowerLeg.position.x = 0.11;
+
+        leftLowerLeg.scale.set(3,3,3);
+        leftLowerLeg.position.y = 0.2;
+        leftLowerLeg.position.x = -0.11;
+
+        rightLegAnkle.scale.set(5.7, 5.7, 5.7);
+        rightLegAnkle.position.y = -0.15;
+        rightLegAnkle.position.x = 0.11;
+        rightLegAnkle.rotation.y = Math.PI / 4;
+
+        leftLegAnkle.scale.set(5.7, 5.7, 5.7);
+        leftLegAnkle.position.y = -0.15;
+        leftLegAnkle.position.x = -0.11;
+        leftLegAnkle.rotation.y = Math.PI / 4;
+
+        rightFoot.scale.set(1, 1, 1);
+        rightFoot.position.y = -0.19;
+        rightFoot.position.x = 0.116;
+        rightFoot.position.z = 0.07;
+
+        leftFoot.scale.set(1, 1, 1);
+        leftFoot.position.y = -0.19;
+        leftFoot.position.x = -0.116;
+        leftFoot.position.z = 0.07;
+
+        rightLowerArm.position.y = 1.225;
+        rightLowerArm.position.x = 0.265;
+        rightLowerArm.position.z = 0.005;
+        rightLowerArm.rotation.z = Math.PI / -80;
+
+        leftLowerArm.position.y = 1.225;
+        leftLowerArm.position.x = -0.265;
+        leftLowerArm.position.z = 0.005;
+        leftLowerArm.rotation.z = Math.PI / 80;
+
+        rightWristTorus.position.x = 0.256;
+        rightWristTorus.position.y = 1.055;
+        rightWristTorus.position.z = 0.005;
+        rightWristTorus.scale.set(0.3, 0.3, 0.6);
+        rightWristTorus.rotation.x = Math.PI / 2;
+
+        leftWristTorus.position.x = -0.256;
+        leftWristTorus.position.y = 1.055;
+        leftWristTorus.position.z = 0.005;
+        leftWristTorus.scale.set(0.3, 0.3, 0.6);
+        leftWristTorus.rotation.x = Math.PI / 2;
+
+        rightPalm.position.x = 0.265;
+        rightPalm.position.y = 1.02;
+        rightPalm.position.z = 0.005;
+        rightPalm.scale.set(0.7, 0.8, 0.7);
+        rightPalm.rotation.z = Math.PI / 20;
+
+        leftPalm.position.x = -0.265;
+        leftPalm.position.y = 1.02;
+        leftPalm.position.z = 0.005;
+        leftPalm.scale.set(0.7, 0.8, 0.7);
+        leftPalm.rotation.z = Math.PI / -20;
+
+        rightKnuckles.position.x = 0.27;
+        rightKnuckles.position.y = 0.9645;
+        rightKnuckles.position.z = 0.005;
+        rightKnuckles.scale.set(0.7, 0.35, 0.7);
+
+        leftKnuckles.position.x = -0.27;
+        leftKnuckles.position.y = 0.9645;
+        leftKnuckles.position.z = 0.005;
+        leftKnuckles.scale.set(0.7, 0.35, 0.7);
+
+        rightThumbBase.position.x = 0.24;
+        rightThumbBase.position.y = 1.02;
+        rightThumbBase.position.z = 0.005;
+        rightThumbBase.scale.set(0.7, 0.8, 0.7);
+        rightThumbBase.rotation.z = Math.PI / -10;
+
+        leftThumbBase.position.x = -0.24;
+        leftThumbBase.position.y = 1.02;
+        leftThumbBase.position.z = 0.005;
+        leftThumbBase.scale.set(0.7, 0.8, 0.7);
+        leftThumbBase.rotation.z = Math.PI / 10;
+
+        rightFingers.position.x = 0.259;
+        rightFingers.position.y = 0.9138
+        rightFingers.position.z = 0.005;
+        rightFingers.rotation.z = Math.PI / -12;
+
+        rightThumb.position.x = 0.225;
+        rightThumb.position.y = 0.96;
+        rightThumb.position.z = 0.005;
+        rightThumb.scale.set(0.7, 0.5, 0.7);
+        rightThumb.rotation.z = Math.PI / -20;
+
+        leftFingers.position.x = -0.259;
+        leftFingers.position.y = 0.9138
+        leftFingers.position.z = 0.005;
+        leftFingers.rotation.z = Math.PI / 12;
+
+        leftThumb.position.x = -0.225;
+        leftThumb.position.y = 0.96;
+        leftThumb.position.z = 0.005;
+        leftThumb.scale.set(0.7, 0.5, 0.7);
+        leftThumb.rotation.z = Math.PI / 20;
+
+        charTopBase.scale.set(1, 0.1, 1);
+        charTopBase.position.y = -0.265;
+
+        charBottomBase.scale.set(1.2, 0.1, 1.2);
+        charBottomBase.position.y = -0.365;
+
+        background.position.y = 19.45;
+        background.rotation.x = Math.PI * 0.1765;
+        background.scale.set(5,5,5);
+
+        camera.lookAt(spineColumn_1.position);
+        camera.position.z = 6;
+        camera.position.y = 1.5;
+
+
+        // Update camera settings and renderer on screen resize
+        function windowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+
+            fxaaShader.uniforms["resolution"].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+
+            
+        }
+        
+        window.addEventListener("resize", windowResize);
+        renderer.domElement.style.touchAction = "none";
+        renderer.domElement.addEventListener("mousemove", mouseMove);
+
+
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        orbit.update();
+        orbit.addEventListener("change", render);
+
+        // Render everything in the scene
+        function render(){
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            //renderer.render(scene, camera);
+            composer.render();
+            requestAnimationFrame(render);
+            
+        }
+
+        render();
+
+    </script>
+    
+</body>
+</html>

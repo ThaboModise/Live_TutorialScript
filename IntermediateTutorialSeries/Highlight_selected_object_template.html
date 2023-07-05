@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <canvas id="canvas"></canvas>
+    <svg id="svg" width="980.3" height="1300" version="1.1" viewBox="0 0 259.37 343.96" xmlns="http://www.w3.org/2000/svg">
+        <g id="grp_1" transform="translate(-7.6964,-118.46)">
+         <rect x="-.81259" y="109.55" width="274.68" height="366.65" ry=".0058248" fill="rgba(0,0,0,0)" fill-rule="evenodd" stroke-linecap="square" stroke-width=".31158"/>
+         
+         <rect id="main-bg" x="8.4969" y="119.25" width="258.26" height="342.71" ry="8.1059" fill-opacity="0" stroke="#ff9d00" stroke-linecap="square" stroke-width=".8788"/>
+         <g class="circular-hud" transform="translate(0,14.817)" fill="#51beff" stroke="#51beff" stroke-linecap="round" stroke-linejoin="round">
+            <foreignObject id="FO" width="110" height="110" x="86" y="190"></foreignObject>
+            <path class="circular-hud" d="m125.28 174.32-2.2219 6.1207a66.439 66.439 0 0 0-47.377 50.891l-7.986 1.9448v22.043l8.0059 2.0736a66.439 66.439 0 0 0 65.104 53.509 66.439 66.439 0 0 0 17.923-2.4714l4.3313 3.2876 19.569-10.145-0.0587-5.476a66.439 66.439 0 0 0 24.673-51.633 66.439 66.439 0 0 0-48.986-64.028l-2.0873-6.1156zm32.978 11.594a61.123 61.123 0 0 1 43.671 58.549 61.123 61.123 0 0 1-43.671 58.53v-5.5939a55.808 55.808 0 0 1-17.453 2.8725 55.808 55.808 0 0 1-19.049-3.426l-4.4371 2.6103-19.73-14.134 1.0224-4.4352a55.808 55.808 0 0 1-13.614-36.423 55.808 55.808 0 0 1 8.5107-29.494l-1.7037-4.4488 17.579-16.734 4.4999 1.8633a55.808 55.808 0 0 1 26.923-6.9942 55.808 55.808 0 0 1 17.453 2.8431z" fill="#51beff" fill-opacity=".25" fill-rule="evenodd" stroke-width=".80037" style="paint-order:markers fill stroke"/>
+            <path class="circular-hud" d="m140.8 190.06a54.406 54.406 0 0 0-54.406 54.406 54.406 54.406 0 0 0 54.406 54.406 54.406 54.406 0 0 0 54.406-54.406 54.406 54.406 0 0 0-54.406-54.406zm0 1.1542a53.252 53.252 0 0 1 53.252 53.252 53.252 53.252 0 0 1-53.252 53.252 53.252 53.252 0 0 1-53.252-53.252 53.252 53.252 0 0 1 53.252-53.252z" fill-opacity="0" stroke-width=".3" style="paint-order:markers fill stroke"/>
+         </g>
+         <g transform="matrix(.62274 0 0 .62274 49.351 27.683)">
+          <g transform="matrix(.20872 0 0 .20872 45.636 201.83)" enable-background="new" fill="none">
+           <path transform="matrix(1.2676,0,0,1.2676,-85.869,-12.275)" d="m143.03 58.775c-1.3757 1.2431-3.0091 2.0732-4.6621 2.0957-0.0752 0.0011-0.15086-0.0025-0.22657-0.0059-2.522 0.37598-13.431 2.3899-18.447 9.3867-0.45648 0.75655-0.92108 1.5739-1.4336 2.4863-0.29774 0.68441-0.55502 1.3977-0.73829 2.1602-3.1155 12.961 15.869 14.41 30.846 20.498 0.12028-0.62683 0.40865-1.2493 0.83984-1.875 1.8585-2.6981 5.8164-3.248 5.8164-3.248s0.81424-5.4136 2.2773-7.7129c0.369-0.58002 0.8859-1.2633 1.4512-1.9629-0.59948-1.4198-1.1833-3.01-1.7031-4.918-1.3616-0.38305-2.6813-0.97641-3.5391-1.957-2.1454-2.4527-2.6673-4.7401-2.3301-7.3223 0.28854-2.2094 0.90216-4.0524 1.4551-4.9219-0.0498-0.08038-0.16407-0.28125-0.16407-0.28125s-4.977-1.5018-9.4414-2.4219zm-35.615 26.703c-10.532 7.7309-28.152 15.545-28.152 15.545s4.1995 4.6377 10.182 7.0703c5.5183 2.2438 8.9025-0.0858 12.854 1.9102 1.8366 0.92901 2.1821 3.5257 6.9629 4.9844 3.8056 1.1616 6.7762 1.0836 9.873 0.95899 3.622-7.3322 7.3957-12.799 9.0391-14.271l3.7988 1.1035c-3.6037 3.1692-6.8758 7.7965-9.8926 13.092 10.543 0.029 11.793 7.8247 25.168 8.0723 8.5903 0.15863 15.259-1.827 19.969-4-3.2298-6.0612-8.6421-11.778-14.738-16.105-11.815-8.3871-37.864-6.6733-45.062-18.359zm55.646 4.5957c-1.2618 1.1733-2.5913 2.2372-3.9395 3.0273 0.21376 3.0041-0.55679 5.5508-1.9434 6.9844 0.45913 0.33562 0.90609 0.681 1.3359 1.041 6.4613 5.4117 10.728 10.96 13.279 16.318 2.4036-1.5467 3.6856-2.7773 3.6856-2.7773-3.6954-5.547-9.6403-13.12-12.219-23.945-0.0536-0.22499-0.1359-0.43039-0.19922-0.64844z" stroke="#51beff" stroke-width="1.8208"/>
+           <path d="m76.605 116.61c-3.9919 3.5767-17.913 25.664-21.358 47.588 6.9935-17.608 15.497-36.797 26.176-46.188zm14.23-71.267c-0.26262-0.0065-0.52106-0.0043-0.77493 0.0025-4.2847 0.11187-9.6646 2.68-10.002 8.0787-0.17418 2.7842 1.2444 5.8737 3.2904 8.1431-0.94413 0.08171-2.4762 0.26403-5.3726 0.76008-10.783 1.8395-27.661 8.7448-29.661 20.379-5.1352 29.875 40.66 23.554 59.101 36.645 16.356 11.611 28.985 31.083 19.213 45.976-6.6437 10.125-20.709 12.991-32.619 13.164-10.626 0.14646-23.599-2.1698-33.771-3.3696-12.911-1.5232-23.476 2.3854-28.792 4.3525-6.0593 2.2425-6.9263 4.4571-1.3048 2.1218 5.2045-2.1624 16.456-5.9091 29.663-3.6593 11.211 1.9108 22.661 5.248 32.538 5.38 23.045 0.30775 37.514-6.8193 42.077-21.634 3.8858-12.616-0.13749-29.676-19.351-45.768-0.54489-0.45637-1.1115-0.89417-1.6935-1.3196 1.7576-1.8172 2.7344-5.0455 2.4635-8.8536 7.3415-4.3026 14.419-14.678 14.82-17.46 0.18734-2.8105 0.75476-6.654-5.3775-13.79-7.7107-8.9744-17.304-9.3711-17.304-9.3711-0.77155 0.72178-1.7765 3.4853-2.206 6.7739-0.42744 3.2732 0.23416 6.1729 2.9537 9.2819 3.2079 3.6674 11.443 3.2879 11.443 3.2879s-4.783 4.9999-6.6378 7.9153c-1.8547 2.9147-2.8868 9.7771-2.8868 9.7771s-5.0172 0.69707-7.3731 4.1173c-0.54659 0.79317-0.91214 1.5822-1.0646 2.3768-18.985-7.7174-43.05-9.5537-39.101-25.984 3.2991-13.725 22.32-17.22 26.137-17.789 0.09596 0.0042 0.19188 0.0089 0.28721 0.0075 5.4557-0.07442 10.803-7.0102 10.401-12.387-0.40364-5.3945-5.157-7.0585-9.0963-7.1552z" stroke="#ff8500" stroke-width="2.308"/>
+          </g>
+          <g transform="translate(27.714,-44.816)" enable-background="new">
+           <path transform="matrix(.42487 0 0 .42487 -94.602 214.38)" d="m529.85 64.801-9.5059 19.852h-152.17c-9.1042-9.0937-21.72-14.709-35.703-14.709l-231.7 0.52539-23.754 35.59-0.32617 109.6 4.918-0.81836 0.79688-106.1 20.707-32.49h125.64v-0.08984h52.461c4.554-0.93665 9.2086-1.427 13.883-1.4629 4.8508 1e-3 9.6861 0.49159 14.412 1.4629h16.748c11.441 0 23.011 3.0714 32.68 8.5h-27.676c5.3629 3.2611 10.134 7.2279 14.152 11.766h28.094c5.7731 6.7885 9.2969 15.002 9.2969 24.207v-0.625c0-8.5379-2.131-16.563-5.8906-23.582h367.19v-11.766h-10.361l4.1016-11.277h183.21v-6.4863h-186.06l-6.5469 17.764h-202.97l6.375-13.365h96.885v-6.4863zm-147.05 78.299c0 8.9001-2.5812 16.478-7.0742 22.611h-29.463c-3.7907 4.4887-8.3086 8.4541-13.406 11.768h28.934c-8.2489 4.3673-18.363 6.6602-29.326 6.6602h-13c-7.7295 2.8322-16.01 4.2907-24.371 4.2949-8.366-2e-3 -16.649-1.461-24.383-4.2949h-48.059s0.0289 9.3494 6e-3 9.3398c0 0 77.237 0.0247 110.02-0.0937 14.675-0.053 27.783-6.1251 36.912-15.906h277.12l14.656 22.955h186.4l15.145-28.627-4.2676-7.1914-14.223 25.947h-181.05l-8.1582-13.084h88.875v-11.766l-366.37-2e-3c3.254-6.5984 5.0781-14.048 5.0781-21.984zm-91.332 41.039c1.3313 0.11786 2.6666 0.19464 4.0039 0.23242 1.3373-0.0378 2.6726-0.11456 4.0039-0.23242z" fill="#51beff" fill-opacity=".25098" stroke="#51beff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.1339" style="paint-order:markers fill stroke"/>
+          </g>
+          <g transform="matrix(.3111 0 0 .3111 -39.054 157.8)" enable-background="new" fill="none" stroke-linecap="round" stroke-linejoin="round">
+           <path transform="matrix(.85048 0 0 .85048 214.62 133.28)" d="m116.92 14.18a95.45 84.802 0 0 0-95.23 81.826 88.845 88.845 0 0 0-0.14648 3.9473 95.45 84.802 0 0 0 95.377 83.83 95.45 84.802 0 0 0 24.652-2.8809 88.845 88.845 0 0 0 0.63672-0.22656 83.416 82.922 0 0 0 0.18555-0.0156 95.45 84.802 0 0 0 69.975-81.68 95.45 84.802 0 0 0-61.879-79.08 88.845 88.845 0 0 0-0.58203-0.33398 95.45 84.802 0 0 0-1.0391-0.28516 95.45 84.802 0 0 0-1.7402-0.47852 95.45 84.802 0 0 0-10.861-2.6562 95.45 84.802 0 0 0-0.35937-0.08789 83.416 82.922 0 0 0-0.24414-0.0098 95.45 84.802 0 0 0-18.744-1.8691zm19.176 10.014a77.493 77.493 0 0 1 29.709 6.0234 77.457 76.999 0 0 1 42.146 68.508 77.457 76.999 0 0 1-77.457 76.998 77.457 76.999 0 0 1-37.971-10.104 77.493 77.493 0 0 1-33.92-63.934 77.493 77.493 0 0 1 77.492-77.492z" stroke="#51beff" stroke-width="1.8208" style="paint-order:markers fill stroke"/>
+           <path d="m313.54 139.79a87.422 77.67 0 0 0-87.422 77.67 87.422 77.67 0 0 0 87.422 77.67 87.422 77.67 0 0 0 87.422-77.67 87.422 77.67 0 0 0-87.422-77.67zm0.51708 5.5479a81.178 72.122 0 0 1 81.178 72.122 81.178 72.122 0 0 1-81.178 72.122 81.178 72.122 0 0 1-81.177-72.122 81.178 72.122 0 0 1 81.177-72.122z" stroke="#ff8500" stroke-width="1.5485" style="paint-order:markers fill stroke"/>
+          </g>
+         </g>
+         <g fill="none" stroke="#51beff">
+          <path class="main-frame" d="m254.6 220.51-3.8188 4.971v138.77l1.9517-2.5908v74.457h-47.51l2.922-6.5881h-73.581l-2.7006 6.089h-111.88v-74.167l3.4232-4.4561 0.13282-136.09-2.6413 3.893-0.20632-74.566 117.33 0.0648 2.881-6.3562 113.74-0.35253zm-185.71-84.338-2.6152 6.4104-48.795 0.0438 0.54096 86.682-1.894 2.2339v214.16h186.08l1.4167-3.1942h52.065v-85.019l2.948-3.8376-0.14918-218.04z" fill="none" stroke-width=".8"/>
+          <g stroke-width=".3">
+           <path class="streaks" d="m184.18 332.22-9.2971 16.715h-50.991v2.9104h5.7707l-1.9466 3.1957h-96.163l4.4834-7.2032h25.181l6.8931-13.992-1.1586-0.7767-6.3547 12.917h-24.914l-5.6947 9.0553h-4.578v1.8547h102.92l2.8236-4.9687-0.0553-0.0816h44.399l9.8361-17.791z" fill="#51beff" fill-opacity=".25098"/>
+           <path class="streaks" d="m36.055 160.87 0.86934 1.6364-2.5603 4.4844v24.232l-6.172 6.6486-0.72003-1.6494 5.5724-5.9762v-23.983z"/>
+           <path class="streaks" d="m213.62 192.25-0.92973 1.0447-2.1694-4.4028h-21.251v-1.7164h21.782z"/>
+           <path class="streaks" d="m235.44 196.19-0.75441 1.451-5.829-8.8352h-7.0728v-1.7163h7.6041z"/>
+           <path class="streaks" d="m197.67 152.35 0.92973 1.0447 2.1694-4.5669h4.2502v-1.7164h-4.7815z"/>
+           <path class="streaks" d="m207.47 149.2h21.169l-0.0154-1.5074-21.127-0.0259z"/>
+           <path class="streaks" d="m207.52 156.23h14.464l-0.0154-1.5074-14.421-0.0259z"/>
+          </g>
+         </g>
+            <g class="output-text" font-family="'Be Vietnam Pro'" stroke-width=".26458" word-spacing="0px">
+                <g font-size="8.8194px" letter-spacing="-.52917px">
+                <text id = "geo-label" class="mesh-label" x="40.99815" y="403.4231" style="line-height:19.85" xml:space="preserve"><tspan x="40.99815" y="403.4231" dx="0" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="8.8194px" font-weight="600" stroke-width=".26458">GEO-Type:</tspan></text>
+                <text id = "geo-output" class="mesh-output" x="88.892853" y="403.4231" style="line-height:19.85" xml:space="preserve"><tspan x="88.892853" y="403.4231" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="8.8194px" font-weight="200" stroke-width=".26458">Cylinder</tspan></text>
+                <text id = "mat-label" class="mesh-label" x="40.99815" y="417.36392" style="line-height:19.85" xml:space="preserve"><tspan x="40.99815" y="417.36392" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="8.8194px" font-weight="600" stroke-width=".26458">MAT-Type:</tspan></text>
+                <text id = "mat-output" class="mesh-output" x="88.892853" y="417.36392" style="line-height:19.85" xml:space="preserve"><tspan x="88.892853" y="417.36392" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="8.8194px" font-weight="200" stroke-width=".26458">MeshStandardMaterial</tspan></text>
+                </g>
+                <g transform="matrix(1.2141 0 0 1.2141 -9.8951 -78.999)" font-size="4.9389px">
+                <text id="transform-label" transform="translate(-1.3417,20.749)" x="47.359165" y="364.66733" fill="#51beff" letter-spacing="-.0026458px" style="inline-size:0;line-height:19.85;white-space:pre" xml:space="preserve"><tspan x="47.359165" y="364.66733" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="4.9389px" font-weight="600" stroke-width=".26458">Transform:</tspan></text>
+                <text class="matrix-val-ouput" id="transform-output" x="74.23278" y="385.32819" letter-spacing="-.26458px" style="line-height:19.85" xml:space="preserve"><tspan x="74.23278" y="385.32819" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="4.9389px" font-weight="200" stroke-width=".26458">Cylinder</tspan></text>
+                <text id="rotation-label" transform="translate(2.6601,14.416)" x="47.359165" y="364.66733" fill="#51beff" letter-spacing="-.0026458px" style="inline-size:0;line-height:19.85;white-space:pre" xml:space="preserve"><tspan x="47.359165" y="364.66733" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="4.9389px" font-weight="600" stroke-width=".26458">Rotation:</tspan></text>
+                <text class="matrix-val-ouput" id="rotation-output" x="74.23278" y="379.04431" letter-spacing="-.26458px" style="line-height:19.85" xml:space="preserve"><tspan x="74.23278" y="379.04431" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="4.9389px" font-weight="200" stroke-width=".26458">Cylinder</tspan></text>
+                <text id="scale-label" transform="translate(10.03,8.0927)" x="47.359165" y="364.66733" fill="#51beff" letter-spacing="-.0026458px" style="inline-size:0;line-height:19.85;white-space:pre" xml:space="preserve"><tspan x="47.359165" y="364.66733" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="4.9389px" font-weight="600" stroke-width=".26458">Scale:</tspan></text>
+                <text class="matrix-val-ouput" id="scale-output" x="74.23278" y="372.76044" letter-spacing="-.26458px" style="line-height:19.85" xml:space="preserve"><tspan x="74.23278" y="372.76044" fill="#51beff" font-family="'Be Vietnam Pro'" font-size="4.9389px" font-weight="200" stroke-width=".26458">Cylinder</tspan></text>
+                </g>
+            </g>
+        </g>
+        <g transform="translate(-7.6964,-24.659)" fill="none" stroke="#51beff">
+         <g fill="#51beff" fill-opacity=".25098" stroke-width=".80037">
+          <path class="battery-bar" d="m244.29 179.18v-15.809h-9.6421l-8.7655 15.957z"/>
+          <path class="battery-bar" d="m244.29 198.31v-15.809h-20.073l-8.7655 15.957z"/>
+          <path class="battery-bar" d="m244.29 217.81v-15.809h-30.855l-8.7656 15.957z"/>
+          <path class="battery-bar" d="m244.29 236.96v-15.809h-41.516l-8.7655 15.957z"/>
+          <path class="battery-bar" d="m244.29 256.33v-15.809h-52.034l-8.7656 15.957z"/>
+         </g>
+         <path d="m27.819 293.47 20.027-24.663h181.43c12.832 0 12.115 7.9854 12.115 7.9854v27.987l-19.817 25.222s-177.89 0.29471-184.34 0.28078c-9.3657-0.0216-9.4828-6.4359-9.4828-6.4359z"/>
+         <path class="streaks" d="m225.16 87.806 0.0885-3.7312 11.15-18.299 5.7001-0.04743-7e-3 -1.4616-4.5928 0.01588 0.013-1.6244 4.3387-0.07463v-1.7164h-15.318v1.4925h9.6957v1.9365l-26.331 0.06006-3e-3 1.4848 25.167-0.04545-10.876 17.608v4.4774z" stroke-width=".3"/>
+        </g>
+        <g fill="#51beff">
+            <g id="raw" class="big-button">
+                <path id="raw" transform="translate(-7.6964 -24.659)" d="m36.498 81.417 6.8581-11.895h17.79c1.8035 0 2.438 2.6348 2.438 3.8515v13.499l-7.1162 12.165s-16.771 0.14221-17.589 0.13535c-0.81852-7e-3 -2.3135-1.5324-2.3135-3.1042z" fill-opacity=".25098" stroke="#51beff" stroke-width=".80037"/>
+                <text transform="translate(-3.1512 -2.435)" x="36.237816" y="61.735153" font-family="'Be Vietnam Pro'" font-size="5.2917px" letter-spacing="-.0026458px" stroke-width=".26458" word-spacing="0px" style="inline-size:0;line-height:1;white-space:pre" xml:space="preserve"><tspan x="36.237816" y="61.735153"><tspan x="36.237816" y="61.735153" fill="#51beff" font-size="5.2917px" stroke-width=".26458">Raw</tspan></tspan><tspan x="36.237816" y="67.02684">Scene</tspan></text>
+            </g>
+            <g  class="big-button">
+                <path id="film" transform="translate(-7.6964 -24.659)" d="m36.498 118.46 6.8581-11.895h17.79c1.8035 0 2.438 2.6348 2.438 3.8515v13.499l-7.1162 12.165s-16.771 0.14221-17.589 0.13535c-0.81852-7e-3 -2.3135-1.5324-2.3135-3.1042z" fill-opacity=".25098" stroke="#51beff" stroke-width=".80037"/>
+                <text transform="translate(-3.1512 34.807)" x="36.237816" y="61.735153" font-family="'Be Vietnam Pro'" font-size="5.2917px" letter-spacing="-.0026458px" stroke-width=".26458" word-spacing="0px" style="inline-size:0;line-height:1;white-space:pre" xml:space="preserve"><tspan x="36.237816" y="61.735153">film<tspan x="36.237816" y="61.735153" fill="#51beff" font-size="5.2917px" stroke-width=".26458"/></tspan><tspan x="36.237816" y="67.02684">Shader</tspan></text> 
+            </g>
+            <g  class="big-button">
+                <path id="bloom" transform="translate(-7.6964 -24.659)" d="m36.498 155.57 6.8581-11.895h17.79c1.8035 0 2.438 2.6348 2.438 3.8515v13.499l-7.1162 12.165s-16.771 0.14217-17.589 0.13547c-0.81852-7e-3 -2.3135-1.5324-2.3135-3.1042z" fill-opacity=".25098" stroke="#51beff" stroke-width=".80037"/>
+                <text transform="translate(-3.1512 71.254)" x="36.237816" y="61.735153" font-family="'Be Vietnam Pro'" font-size="5.2917px" letter-spacing="-.0026458px" stroke-width=".26458" word-spacing="0px" style="inline-size:0;line-height:1;white-space:pre" xml:space="preserve"><tspan x="36.237816" y="61.735153">Bloom<tspan x="36.237816" y="61.735153" fill="#51beff" font-size="5.2917px" stroke-width=".26458"/></tspan><tspan x="36.237816" y="67.02684">Shader</tspan></text> 
+            </g>
+            <g  class="big-button">
+                <path id="dot" transform="translate(-7.6964 -24.659)" d="m36.498 192.8 6.8581-11.895h17.79c1.8035 0 2.438 2.6348 2.438 3.8515v13.499l-7.1162 12.165s-16.771 0.14214-17.589 0.13542c-0.81852-7e-3 -2.3135-1.5324-2.3135-3.1042z" fill-opacity=".25098" stroke="#51beff" stroke-width=".80037"/>
+                <text transform="translate(-3.1512 108.49)" x="36.237816" y="61.735153" font-family="'Be Vietnam Pro'" font-size="5.2917px" letter-spacing="-.0026458px" stroke-width=".26458" word-spacing="0px" style="inline-size:0;line-height:1;white-space:pre" xml:space="preserve"><tspan x="36.237816" y="61.735153">Dot<tspan x="36.237816" y="61.735153" fill="#51beff" font-size="5.2917px" stroke-width=".26458"/></tspan><tspan x="36.237816" y="67.02684">Shader</tspan></text>
+            </g>
+            <g  class="big-button">
+                <path id="sobel" transform="translate(-7.6964 -24.659)" d="m36.498 230.03 6.8581-11.895h17.79c1.8035 0 2.438 2.6348 2.438 3.8515v13.499l-7.1162 12.165s-16.771 0.14216-17.589 0.13545c-0.81852-7e-3 -2.3135-1.5324-2.3135-3.1042z" fill-opacity=".25098" stroke="#51beff" stroke-width=".80037"/>
+                <text transform="translate(-3.1512 145.75)" x="36.237816" y="61.735153" font-family="'Be Vietnam Pro'" font-size="5.2917px" letter-spacing="-.0026458px" stroke-width=".26458" word-spacing="0px" style="inline-size:0;line-height:1;white-space:pre" xml:space="preserve"><tspan x="36.237816" y="61.735153">Sobel<tspan x="36.237816" y="61.735153" fill="#51beff" font-size="5.2917px" stroke-width=".26458"/></tspan><tspan x="36.237816" y="67.02684">Shader</tspan></text>
+            </g>
+        </g>
+    </svg>
+    <script type="module">
+        import * as THREE from  "../three.js-master/build/three.module.js";
+        import { OrbitControls } from  "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import { OBJLoader } from  "../three.js-master/examples/jsm/loaders/OBJLoader.js";
+        import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+        import { ShaderPass } from "../three.js-master/examples/jsm/postprocessing/ShaderPass.js";
+        import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+        import { OutlinePass } from "../three.js-master/examples/jsm/postprocessing/OutlinePass.js";
+        import { FXAAShader } from "../three.js-master/examples/jsm/shaders/FXAAShader.js";
+
+        
+        //Create webgl renderer, assign canvas element and adjust renderer settings
+        const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x000000);
+        
+        //Create perspective camera and add the necessary settings         
+        const camera = new THREE.PerspectiveCamera(45,parseInt(window.getComputedStyle(canvas).getPropertyValue("width")) / parseInt(window.getComputedStyle(canvas).getPropertyValue("height")),0.5, 1000);
+        
+        const scene = new THREE.Scene();
+
+        let INTERSECTED;
+
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+
+        const composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+
+        composer.addPass(renderPass);
+
+        const outline = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
+        outline.edgeThickness = 2.0;
+        outline.edgeStrength = 3.0;
+        outline.visibleEdgeColor.set(0xffffff);
+        
+        composer.addPass(outline);
+
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load("../three.js-master/examples/textures/tri_pattern.jpg", function(texture){
+            if (texture) {
+                outline.patternTexture = texture;
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+    
+            }
+            
+        });
+
+        const fxaaShader = new ShaderPass(FXAAShader);
+        fxaaShader.uniforms["resolution"].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+        composer.addPass(fxaaShader);
+
+        const selectedObjects = [];
+
+        function addSelectedObjects(object){
+            if (selectedObjects.length > 0) {
+                selectedObjects.pop();
+            }
+            selectedObjects.push(object);
+        }
+
+        function intersection(){
+            raycaster.setFromCamera(mouse,camera);
+            const intersects = raycaster.intersectObjects(scene.children, false);
+
+            if ( intersects.length > 0 ) {
+
+                if ( INTERSECTED != intersects[0].object && intersects[0].object.type === "Mesh" ) {
+
+                    INTERSECTED = intersects[0].object;
+                    addSelectedObjects(INTERSECTED);
+                    outline.selectedObjects = selectedObjects;
+
+                    //console.log(INTERSECTED);
+                    console.log(INTERSECTED.name);
+
+            }
+
+            } else {
+
+                INTERSECTED = null;
+
+            }
+        }
+
+
+        function mouseMove(){
+            event.preventDefault();
+            mouse.x = (event.clientX /  window.innerWidth) * 2 -1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            intersection();
+        }
+
+        //Create point-lights
+        const light = new THREE.PointLight();
+        const light2 = new THREE.PointLight();
+        const light3 = new THREE.PointLight();
+        
+        // Create head mesh
+        const headGeo = new THREE.BoxGeometry(0.233, 0.233, 0.23);
+        const headMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const head = new THREE.Mesh(headGeo, headMat);
+
+        // Create a right eye socket
+        const rightEyeSocketGeo = new THREE.TorusGeometry(0.1,0.026,8,24);
+        const rightEyeSocketMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightEyeSocket = new THREE.Mesh(rightEyeSocketGeo, rightEyeSocketMat);
+
+        // Create a left eye socket
+        const leftEyeSocketGeo = new THREE.TorusGeometry(0.1,0.026,8,24);
+        const leftEyeSocketMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftEyeSocket = new THREE.Mesh(leftEyeSocketGeo, leftEyeSocketMat);
+
+        // Create a right eye 
+        const rightEyeGeo = new THREE.SphereGeometry();
+        const rightEyeMat = new THREE.MeshStandardMaterial({color:0xFF6000, /*wireframe: true,*/ emissive: 0xff0000,});
+        const rightEye = new THREE.Mesh(rightEyeGeo, rightEyeMat);
+
+        // Create a left eye 
+        const leftEyeGeo = new THREE.SphereGeometry();
+        const leftEyeMat = new THREE.MeshStandardMaterial({color:0xFF6000, /*wireframe: true,*/ emissive: 0xff0000});
+        const leftEye = new THREE.Mesh(leftEyeGeo, leftEyeMat);
+
+        // Create nose mesh
+        const noseGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.05, 8, 2);
+        const noseMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const nose = new THREE.Mesh(noseGeo, noseMat);
+
+         // Create neck mesh
+         const neckGeo = new THREE.CylinderGeometry();
+        const neckMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const neck = new THREE.Mesh(neckGeo, neckMat);
+
+        // Create mouth
+        const mouthGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        const mouthMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const mouth = new THREE.Mesh(mouthGeo, mouthMat);
+
+        // Create head torso
+        const torsoGeo = new THREE.BoxGeometry(0.233, 0.233, 0.20);
+        const torsoMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const torso = new THREE.Mesh(torsoGeo, torsoMat);
+
+        // Create a right shoulderBallJoint
+        const rightShoulderBallJointGeo = new THREE.SphereGeometry();
+        const rightShoulderBallJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightShoulderBallJoint = new THREE.Mesh(rightShoulderBallJointGeo, rightShoulderBallJointMat);
+
+        // Create a left shoulderBallJoint
+        const leftShoulderBallJointGeo = new THREE.SphereGeometry();
+        const leftShoulderBallJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftShoulderBallJoint = new THREE.Mesh(leftShoulderBallJointGeo, leftShoulderBallJointMat);
+
+        // Create a rightShoulderRing
+        const rightShoulderRingGeo = new THREE.TorusGeometry(1, 0.5, 6, 32);
+        const rightShoulderRingMat = new THREE.MeshStandardMaterial({color:0xffffff, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const rightShoulderRing = new THREE.Mesh(rightShoulderRingGeo, rightShoulderRingMat);
+
+        // Create a leftShoulderRing
+        const leftShoulderRingGeo = new THREE.TorusGeometry(1, 0.5, 6, 32);
+        const leftShoulderRingMat = new THREE.MeshStandardMaterial({color:0xffffff, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const leftShoulderRing = new THREE.Mesh(leftShoulderRingGeo, leftShoulderRingMat);
+
+        // Create a rightUpperArm
+        const rightUpperArmGeo = new THREE.CylinderGeometry(0.033,0.028,0.32,22);
+        const rightUpperArmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightUpperArm = new THREE.Mesh(rightUpperArmGeo, rightUpperArmMat);
+
+        // Create a leftUpperArm
+        const leftUpperArmGeo = new THREE.CylinderGeometry(0.033,0.028,0.32,22);
+        const leftUpperArmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftUpperArm = new THREE.Mesh(leftUpperArmGeo, leftUpperArmMat);
+
+        // Create a right elbowBallJoint
+        const rightElbowBallJointGeo = new THREE.SphereGeometry();
+        const rightElbowBallJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightElbowBallJoint = new THREE.Mesh(rightElbowBallJointGeo, rightElbowBallJointMat);
+
+        // Create a left elbowBallJoint
+        const leftElbowBallJointGeo = new THREE.SphereGeometry();
+        const leftElbowBallJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftElbowBallJoint = new THREE.Mesh(leftElbowBallJointGeo, leftElbowBallJointMat);
+
+        // Create a spine column 1
+        const spineColumn_1Geo = new THREE.TorusGeometry(1, 0.3, 24, 32);
+        const spineColumn_1Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_1 = new THREE.Mesh(spineColumn_1Geo, spineColumn_1Mat);
+
+        // Create a spine column 2
+        const spineColumn_2Geo = new THREE.TorusGeometry(1, 0.3, 24, 32);
+        const spineColumn_2Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_2 = new THREE.Mesh(spineColumn_2Geo, spineColumn_2Mat);
+
+        // Create a spine column 3
+        const spineColumn_3Geo = new THREE.TorusGeometry(1, 0.3, 24, 32);
+        const spineColumn_3Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_3 = new THREE.Mesh(spineColumn_3Geo, spineColumn_3Mat);
+
+        // Create a spine column 4
+        const spineColumn_4Geo = new THREE.TorusGeometry(1, 0.3, 24, 32);
+        const spineColumn_4Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_4 = new THREE.Mesh(spineColumn_4Geo, spineColumn_4Mat);
+
+        // Create a spine column 5
+        const spineColumn_5Geo = new THREE.TorusGeometry(1, 0.25, 24, 32);
+        const spineColumn_5Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_5 = new THREE.Mesh(spineColumn_5Geo, spineColumn_5Mat);
+
+        // Create a spine column 6
+        const spineColumn_6Geo = new THREE.TorusGeometry(1, 0.2, 24, 32);
+        const spineColumn_6Mat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.4});
+        const spineColumn_6 = new THREE.Mesh(spineColumn_6Geo, spineColumn_6Mat);
+
+        // Create head pelvis
+        const pelvisGeo = new THREE.BoxGeometry(0.233, 0.233, 0.20);
+        const pelvisMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const pelvis = new THREE.Mesh(pelvisGeo, pelvisMat);
+
+        // Create a rightUpperLeg
+        const rightUpperLegGeo = new THREE.CylinderGeometry(0.031,0.017,0.16,22);
+        const rightUpperLegMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightUpperLeg = new THREE.Mesh(rightUpperLegGeo, rightUpperLegMat);
+
+        // Create a leftUpperLeg
+        const leftUpperLegGeo = new THREE.CylinderGeometry(0.031,0.017,0.16,22);
+        const leftUpperLegMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftUpperLeg = new THREE.Mesh(leftUpperLegGeo, leftUpperLegMat);
+
+        // Create a right knee joint
+        const rightKneeJointGeo = new THREE.SphereGeometry();
+        const rightKneeJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightKneeJoint = new THREE.Mesh(rightKneeJointGeo, rightKneeJointMat);
+
+        // Create a left knee joint
+        const leftKneeJointGeo = new THREE.SphereGeometry();
+        const leftKneeJointMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftKneeJoint = new THREE.Mesh(leftKneeJointGeo, leftKneeJointMat);
+
+        // Create a rightLowerLeg
+        const rightLowerLegGeo = new THREE.CylinderGeometry(0.015,0.01,0.22,22);
+        const rightLowerLegMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightLowerLeg = new THREE.Mesh(rightLowerLegGeo, rightLowerLegMat);
+
+        // Create a rightLowerLeg
+        const leftLowerLegGeo = new THREE.CylinderGeometry(0.015,0.01,0.22,22);
+        const leftLowerLegMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftLowerLeg = new THREE.Mesh(leftLowerLegGeo, leftLowerLegMat);
+
+        // Create a right ankle
+        const rightLegAnkleGeo = new THREE.CylinderGeometry(0.007,0.012,0.007,4);
+        const rightLegAnkleMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightLegAnkle = new THREE.Mesh(rightLegAnkleGeo, rightLegAnkleMat);
+
+        // Create a left ankle
+        const leftLegAnkleGeo = new THREE.CylinderGeometry(0.007,0.012,0.007,4);
+        const leftLegAnkleMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftLegAnkle = new THREE.Mesh(leftLegAnkleGeo, leftLegAnkleMat);
+
+        // Create right foot
+        const rightFootGeo = new THREE.BoxGeometry(0.12, 0.05, 0.25);
+        const rightFootMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightFoot = new THREE.Mesh(rightFootGeo, rightFootMat);
+
+        // Create left foot
+        const leftFootGeo = new THREE.BoxGeometry(0.12, 0.05, 0.25);
+        const leftFootMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftFoot = new THREE.Mesh(leftFootGeo, leftFootMat);
+
+        // Create a rightLowerArm
+        const rightLowerArmGeo = new THREE.CylinderGeometry(0.028,0.023,0.32,22);
+        const rightLowerArmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightLowerArm = new THREE.Mesh(rightLowerArmGeo, rightLowerArmMat);
+
+        // Create a leftLowerArm
+        const leftLowerArmGeo = new THREE.CylinderGeometry(0.028,0.023,0.32,22);
+        const leftLowerArmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftLowerArm = new THREE.Mesh(leftLowerArmGeo, leftLowerArmMat);
+
+        // Create a right wrist torus
+        const rightWristTorusGeo = new THREE.TorusGeometry(0.1,0.025,8,24);
+        const rightWristTorusMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const rightWristTorus = new THREE.Mesh(rightWristTorusGeo, rightWristTorusMat);
+
+        // Create a right wrist torus
+        const leftWristTorusGeo = new THREE.TorusGeometry(0.1,0.025,8,24);
+        const leftWristTorusMat = new THREE.MeshStandardMaterial({color:0x144FE7, /*wireframe: true,*/ metalness: 1, roughness: 0.2});
+        const leftWristTorus = new THREE.Mesh(leftWristTorusGeo, leftWristTorusMat);
+
+        // Create right palm
+        const rightPalmGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const rightPalmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightPalm = new THREE.Mesh(rightPalmGeo, rightPalmMat);
+
+        // Create left palm
+        const leftPalmGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const leftPalmMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftPalm = new THREE.Mesh(leftPalmGeo, leftPalmMat);
+
+        // Create right knuckles
+        const rightKnucklesGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const rightKnucklesMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightKnuckles = new THREE.Mesh(rightKnucklesGeo, rightKnucklesMat);
+
+        // Create left knuckles
+        const leftKnucklesGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const leftKnucklesMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftKnuckles = new THREE.Mesh(leftKnucklesGeo, leftKnucklesMat);
+
+        // Create right thumb base
+        const rightThumbBaseGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const rightThumbBaseMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightThumbBase = new THREE.Mesh(rightThumbBaseGeo, rightThumbBaseMat);
+
+        // Create left thumb base
+        const leftThumbBaseGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const leftThumbBaseMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftThumbBase = new THREE.Mesh(rightThumbBaseGeo, rightThumbBaseMat);
+
+        // Create a right fingers
+        const rightFingersGeo = new THREE.CylinderGeometry(0.023,0.021,0.09,4,2,false,0.8);
+        const rightFingersMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightFingers = new THREE.Mesh(rightFingersGeo, rightFingersMat);
+
+        // Create a left fingers
+        const leftFingersGeo = new THREE.CylinderGeometry(0.023,0.021,0.09,4,2,false,0.8);
+        const leftFingersMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftFingers = new THREE.Mesh(leftFingersGeo, leftFingersMat);
+
+        // Create a right thumb
+        const rightThumbGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const rightThumbMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const rightThumb = new THREE.Mesh(rightThumbGeo, rightThumbMat);
+
+        // Create a right thumb
+        const leftThumbGeo = new THREE.BoxGeometry(0.05, 0.1, 0.05);
+        const leftThumbMat = new THREE.MeshStandardMaterial({color:0x008fff,emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const leftThumb = new THREE.Mesh(leftThumbGeo, leftThumbMat);
+
+        // Create a char top base
+        const charTopBaseGeo = new THREE.CylinderGeometry(1, 1, 1, 24);
+        const charTopBaseMat = new THREE.MeshStandardMaterial({color:0x009fbf, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const charTopBase = new THREE.Mesh(charTopBaseGeo, charTopBaseMat);
+
+        // Create a char bottom base
+        const charBottomBaseGeo = new THREE.CylinderGeometry(1, 1, 1, 24);
+        const charBottomBaseMat = new THREE.MeshStandardMaterial({color:0x009fbf, /*wireframe: true,*/ metalness: 1, roughness: 0.6});
+        const charBottomBase = new THREE.Mesh(charBottomBaseGeo, charBottomBaseMat);
+
+        //Create Dodecahedron as background
+        const backgroundGeo = new THREE.DodecahedronGeometry(5);
+        const backgroundMat = new THREE.MeshStandardMaterial({color:0x0055ff, emissive: 0x002233, /*wireframe: true,*/ metalness: 1, roughness: 0.9, side: THREE.DoubleSide});
+        const background = new THREE.Mesh(backgroundGeo, backgroundMat);
+
+        let object;
+
+        function loadModel() {
+
+            object.traverse((child)=>{
+                if (child.isMesh) {
+                    switch (child.name) {
+                        case "Cape":
+                            child.material = new THREE.MeshStandardMaterial({color:0x000bff, metalness: 1, roughness: 0.4})
+                            break;
+                        case "Frame":
+                        child.material = new THREE.MeshStandardMaterial({color:0x144FE7, metalness: 1, roughness: 0.4})
+                        break;
+                        default:
+                            child.material = new THREE.MeshStandardMaterial({color:0xFF6000, emissive:0xff0000});
+                        break;
+                    }
+                    
+                }
+            
+            })
+
+            object.position.y = 1.625;
+            object.position.z = 0.171;
+            object.scale.set(0.017,0.017,0.017);
+
+            //console.log("object", object);
+            scene.add( object );
+
+        }   
+
+        const manager = new THREE.LoadingManager( loadModel );
+
+        function onProgress( xhr ) {
+
+            if ( xhr.lengthComputable ) {
+
+                const percentComplete = xhr.loaded / xhr.total * 100;
+                console.log( 'model ' + Math.round( percentComplete, 2 ) + '% downloaded' );
+
+            }
+
+        }
+
+        function onError() {console.log("Error has ocuured");}
+
+            const loader = new OBJLoader( manager );
+
+            loader.load( '../logo/superhero.obj', function ( obj ) {
+
+            object = obj;
+
+        }, onProgress, onError );
+
+        scene.add(light, light2, light3);
+       
+        scene.add(head);
+        scene.add(nose);
+        scene.add(mouth);
+        scene.add(rightEyeSocket, leftEyeSocket);
+        scene.add(rightEye, leftEye);
+        scene.add(nose);
+        scene.add(neck);
+        scene.add(torso);
+
+        /*if (object !== undefined) {
+            torso.attach(object);
+        }*/
+
+        scene.add(rightShoulderBallJoint, leftShoulderBallJoint); 
+        scene.add(rightShoulderRing, leftShoulderRing);    
+        scene.add(rightUpperArm, leftUpperArm);
+        scene.add(rightElbowBallJoint, leftElbowBallJoint);
+        scene.add(spineColumn_1, spineColumn_2, spineColumn_3, spineColumn_4, spineColumn_5, spineColumn_6);
+        scene.add(pelvis);
+        scene.add(rightUpperLeg, leftUpperLeg);
+        scene.add(rightKneeJoint, leftKneeJoint);
+        scene.add(rightLowerLeg, leftLowerLeg);
+        scene.add(rightLegAnkle, leftLegAnkle);
+        scene.add(rightFoot, leftFoot);
+        scene.add(rightLowerArm, leftLowerArm);
+        scene.add(rightWristTorus, leftWristTorus);
+        scene.add(rightPalm, leftPalm);
+        scene.add(rightKnuckles, leftKnuckles);
+        scene.add(leftThumbBase, rightThumbBase);
+        scene.add(rightThumb, leftThumb);
+        scene.add(leftFingers, rightFingers);
+        scene.add(charTopBase, charBottomBase);
+       
+        scene.add(background);
+
+        light.position.y = 0
+        light.position.x = 20
+        light.position.z = 30;
+        light.intensity = 0.6; 
+
+        light2.position.y = 0
+        light2.position.x = -20
+        light2.position.z = 30;
+        light2.intensity = 0.6;
+
+        light3.position.y = 2;
+        light3.position.z = -3;
+
+        head.position.y = 2.02;
+        head.scale.set(0.95, 1.18, 0.95);
+
+        rightEyeSocket.position.y = 2.045;
+        rightEyeSocket.position.x = 0.06;
+        rightEyeSocket.position.z = 0.11
+        rightEyeSocket.scale.set(0.28, 0.28, 0.28);
+
+        leftEyeSocket.position.y = 2.045;
+        leftEyeSocket.position.x = -0.06;
+        leftEyeSocket.position.z = 0.11
+        leftEyeSocket.scale.set(0.28, 0.28, 0.28);
+
+        rightEye.position.y = 2.045;
+        rightEye.position.x = 0.06;
+        rightEye.position.z = 0.105
+        rightEye.scale.set(0.025, 0.025, 0.025);
+
+        leftEye.position.y = 2.045;
+        leftEye.position.x = -0.06;
+        leftEye.position.z = 0.105
+        leftEye.scale.set(0.025, 0.025, 0.025);
+
+        nose.position.z = 0.115;
+        nose.position.y = 2.;
+        nose.scale.set(0.6, 1.1, 0.6);
+
+        mouth.position.y = 1.9375;
+        mouth.position.z = 0.1;
+        mouth.scale.set(0.3, 0.1, 0.2);
+
+        neck.position.y = 1.880;
+        neck.scale.set(0.04, 0.135, 0.04 );
+
+        torso.position.y = 1.62;
+        torso.scale.set(1.73, 1.8, 1.7);
+
+        rightShoulderBallJoint.position.y = 1.733;
+        rightShoulderBallJoint.position.x = 0.22;
+        rightShoulderBallJoint.scale.set(0.07,0.07,0.07);
+
+        leftShoulderBallJoint.position.y = 1.733;
+        leftShoulderBallJoint.position.x = -0.22;
+        leftShoulderBallJoint.scale.set(0.07,0.07,0.07);
+
+        rightShoulderRing.position.y = 1.731;
+        rightShoulderRing.position.x = 0.2;
+        rightShoulderRing.scale.set(0.06,0.06,0.06);
+        rightShoulderRing.rotation.y = Math.PI / 2;
+
+        leftShoulderRing.position.y = 1.731;
+        leftShoulderRing.position.x = -0.2;
+        leftShoulderRing.scale.set(0.06,0.06,0.06);
+        leftShoulderRing.rotation.y = Math.PI / 2;
+
+        rightUpperArm.position.y = 1.555;
+        rightUpperArm.position.x = 0.265;
+        rightUpperArm.position.z = 0.005;
+        rightUpperArm.rotation.z = Math.PI / 60;
+
+        leftUpperArm.position.y = 1.555;
+        leftUpperArm.position.x = -0.265;
+        leftUpperArm.position.z = 0.005;
+        leftUpperArm.rotation.z = Math.PI / -60;
+
+        rightElbowBallJoint.position.y = 1.395;
+        rightElbowBallJoint.position.x = 0.273;
+        rightElbowBallJoint.position.z = 0.006;
+        rightElbowBallJoint.scale.set(0.028,0.028,0.028);
+
+        leftElbowBallJoint.position.y = 1.395;
+        leftElbowBallJoint.position.x = -0.273;
+        leftElbowBallJoint.position.z = 0.006;
+        leftElbowBallJoint.scale.set(0.028,0.028,0.028);
+
+        spineColumn_1.rotation.x = Math.PI / 2;
+        spineColumn_1.scale.set(0.07,0.07,0.07);
+        spineColumn_1.position.y = 1.4;
+
+        spineColumn_2.rotation.x = Math.PI / 2;
+        spineColumn_2.scale.set(0.06,0.06,0.06);
+        spineColumn_2.position.y = 1.362;
+
+        spineColumn_3.rotation.x = Math.PI / 2;
+        spineColumn_3.scale.set(0.06,0.06,0.06);
+        spineColumn_3.position.y = 1.33;
+
+        spineColumn_4.rotation.x = Math.PI / 2;
+        spineColumn_4.scale.set(0.07,0.07,0.07);
+        spineColumn_4.position.y = 1.299;
+
+        spineColumn_5.rotation.x = Math.PI / 2;
+        spineColumn_5.scale.set(0.085,0.085,0.085);
+        spineColumn_5.position.y = 1.2635;
+
+        spineColumn_6.rotation.x = Math.PI / 2;
+        spineColumn_6.scale.set(0.1,0.1,0.1);
+        spineColumn_6.position.y = 1.23;
+
+        pelvis.position.y = 1.115;
+        pelvis.scale.set(1.73, 0.85, 1.7);
+
+        rightUpperLeg.scale.set(3,3,3);
+        rightUpperLeg.position.y = 0.8;
+        rightUpperLeg.position.x = 0.11;
+
+        leftUpperLeg.scale.set(3,3,3);
+        leftUpperLeg.position.y = 0.8;
+        leftUpperLeg.position.x = -0.11;
+
+        rightKneeJoint.scale.set(0.054, 0.054, 0.054);
+        rightKneeJoint.position.y = 0.538;
+        rightKneeJoint.position.x = 0.11;
+
+        leftKneeJoint.scale.set(0.054, 0.054, 0.054);
+        leftKneeJoint.position.y = 0.538;
+        leftKneeJoint.position.x = -0.11;
+
+        rightLowerLeg.scale.set(3,3,3);
+        rightLowerLeg.position.y = 0.2;
+        rightLowerLeg.position.x = 0.11;
+
+        leftLowerLeg.scale.set(3,3,3);
+        leftLowerLeg.position.y = 0.2;
+        leftLowerLeg.position.x = -0.11;
+
+        rightLegAnkle.scale.set(5.7, 5.7, 5.7);
+        rightLegAnkle.position.y = -0.15;
+        rightLegAnkle.position.x = 0.11;
+        rightLegAnkle.rotation.y = Math.PI / 4;
+
+        leftLegAnkle.scale.set(5.7, 5.7, 5.7);
+        leftLegAnkle.position.y = -0.15;
+        leftLegAnkle.position.x = -0.11;
+        leftLegAnkle.rotation.y = Math.PI / 4;
+
+        rightFoot.scale.set(1, 1, 1);
+        rightFoot.position.y = -0.19;
+        rightFoot.position.x = 0.116;
+        rightFoot.position.z = 0.07;
+
+        leftFoot.scale.set(1, 1, 1);
+        leftFoot.position.y = -0.19;
+        leftFoot.position.x = -0.116;
+        leftFoot.position.z = 0.07;
+
+        rightLowerArm.position.y = 1.225;
+        rightLowerArm.position.x = 0.265;
+        rightLowerArm.position.z = 0.005;
+        rightLowerArm.rotation.z = Math.PI / -80;
+
+        leftLowerArm.position.y = 1.225;
+        leftLowerArm.position.x = -0.265;
+        leftLowerArm.position.z = 0.005;
+        leftLowerArm.rotation.z = Math.PI / 80;
+
+        rightWristTorus.position.x = 0.256;
+        rightWristTorus.position.y = 1.055;
+        rightWristTorus.position.z = 0.005;
+        rightWristTorus.scale.set(0.3, 0.3, 0.6);
+        rightWristTorus.rotation.x = Math.PI / 2;
+
+        leftWristTorus.position.x = -0.256;
+        leftWristTorus.position.y = 1.055;
+        leftWristTorus.position.z = 0.005;
+        leftWristTorus.scale.set(0.3, 0.3, 0.6);
+        leftWristTorus.rotation.x = Math.PI / 2;
+
+        rightPalm.position.x = 0.265;
+        rightPalm.position.y = 1.02;
+        rightPalm.position.z = 0.005;
+        rightPalm.scale.set(0.7, 0.8, 0.7);
+        rightPalm.rotation.z = Math.PI / 20;
+
+        leftPalm.position.x = -0.265;
+        leftPalm.position.y = 1.02;
+        leftPalm.position.z = 0.005;
+        leftPalm.scale.set(0.7, 0.8, 0.7);
+        leftPalm.rotation.z = Math.PI / -20;
+
+        rightKnuckles.position.x = 0.27;
+        rightKnuckles.position.y = 0.9645;
+        rightKnuckles.position.z = 0.005;
+        rightKnuckles.scale.set(0.7, 0.35, 0.7);
+
+        leftKnuckles.position.x = -0.27;
+        leftKnuckles.position.y = 0.9645;
+        leftKnuckles.position.z = 0.005;
+        leftKnuckles.scale.set(0.7, 0.35, 0.7);
+
+        rightThumbBase.position.x = 0.24;
+        rightThumbBase.position.y = 1.02;
+        rightThumbBase.position.z = 0.005;
+        rightThumbBase.scale.set(0.7, 0.8, 0.7);
+        rightThumbBase.rotation.z = Math.PI / -10;
+
+        leftThumbBase.position.x = -0.24;
+        leftThumbBase.position.y = 1.02;
+        leftThumbBase.position.z = 0.005;
+        leftThumbBase.scale.set(0.7, 0.8, 0.7);
+        leftThumbBase.rotation.z = Math.PI / 10;
+
+        rightFingers.position.x = 0.259;
+        rightFingers.position.y = 0.9138
+        rightFingers.position.z = 0.005;
+        rightFingers.rotation.z = Math.PI / -12;
+
+        rightThumb.position.x = 0.225;
+        rightThumb.position.y = 0.96;
+        rightThumb.position.z = 0.005;
+        rightThumb.scale.set(0.7, 0.5, 0.7);
+        rightThumb.rotation.z = Math.PI / -20;
+
+        leftFingers.position.x = -0.259;
+        leftFingers.position.y = 0.9138
+        leftFingers.position.z = 0.005;
+        leftFingers.rotation.z = Math.PI / 12;
+
+        leftThumb.position.x = -0.225;
+        leftThumb.position.y = 0.96;
+        leftThumb.position.z = 0.005;
+        leftThumb.scale.set(0.7, 0.5, 0.7);
+        leftThumb.rotation.z = Math.PI / 20;
+
+        charTopBase.scale.set(1, 0.1, 1);
+        charTopBase.position.y = -0.265;
+
+        charBottomBase.scale.set(1.2, 0.1, 1.2);
+        charBottomBase.position.y = -0.365;
+
+        background.position.y = 19.45;
+        background.rotation.x = Math.PI * 0.1765;
+        background.scale.set(5,5,5);
+
+        camera.lookAt(spineColumn_1.position);
+        camera.position.z = 6;
+        camera.position.y = 1.5;
+
+
+        // Update camera settings and renderer on screen resize
+        function windowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+
+            fxaaShader.uniforms["resolution"].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+
+            
+        }
+        
+        window.addEventListener("resize", windowResize);
+        renderer.domElement.style.touchAction = "none";
+        renderer.domElement.addEventListener("mousemove", mouseMove);
+
+
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        orbit.update();
+        orbit.addEventListener("change", render);
+
+        // Render everything in the scene
+        function render(){
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            //renderer.render(scene, camera);
+            composer.render();
+            requestAnimationFrame(render);
+            
+        }
+
+        render();
+
+    </script>
+    
+</body>
+</html>

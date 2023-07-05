@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE from "../three.js-master/build/three.module.js";
+        import { GUI } from "../three.js-master/examples/jsm/libs/lil-gui.module.min.js";
+
+        const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        const camera = new THREE.PerspectiveCamera(45, parseInt(window.getComputedStyle(canvas).getPropertyValue("width"))/ parseInt(window.getComputedStyle(canvas).getPropertyValue("height")), 1.0, 1000);
+
+        const scene = new THREE.Scene();
+
+        const pointLight = new THREE.PointLight();
+
+        const boxGeo = new THREE.BoxGeometry(1,1,1,10,10,10);
+        const boxMat = new THREE.MeshStandardMaterial({color: 0x00ff00,visible: false});
+        const boxMesh = new THREE.Mesh(boxGeo, boxMat);
+
+        const icosahedronGeo = new THREE.IcosahedronGeometry();
+        const icosahedronMat = new THREE.MeshStandardMaterial({color: 0xff0000, visible: false});
+        const icosahedronMesh = new THREE.Mesh(icosahedronGeo, icosahedronMat);
+
+        const torusGeo = new THREE.TorusGeometry();
+        const torusMat = new THREE.MeshStandardMaterial({color: 0x0000ff, visible: false});
+        const torusMesh = new THREE.Mesh(torusGeo, torusMat);
+        
+        const sphereGeo = new THREE.SphereGeometry();
+        const sphereMat = new THREE.MeshStandardMaterial({color: 0x00ffff, visible: false});
+        const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+
+        const cylinderGeo = new THREE.CylinderGeometry();
+        const cylinderMat = new THREE.MeshStandardMaterial({color: 0xff00ff, visible: false});
+        const cylinderMesh = new THREE.Mesh(cylinderGeo, cylinderMat);
+
+        scene.add(pointLight);
+        scene.add(boxMesh);
+        scene.add(icosahedronMesh);
+        scene.add(torusMesh);
+        scene.add(sphereMesh);
+        scene.add(cylinderMesh);
+
+        pointLight.position.z = 5;
+        pointLight.position.y = 10;
+       
+        camera.position.z = 5;
+        camera.position.y = 5;
+
+        const gui = new GUI();
+
+        const boxData ={
+            width: 1,
+            height: 1,
+            depth: 1,
+            widthSegments: 10,
+            heightSegments: 10,
+            depthSegments: 10,
+            rotX: 0,
+            rotY: 0,
+            rotZ: 0
+        };
+
+        const newBoxGeo = ()=>{
+            const newBoxGeo = new THREE.BoxGeometry(boxData.width, boxData.height, boxData.depth, boxData.widthSegments, boxData.heightSegments, boxData.depthSegments);
+            boxMesh.geometry.dispose();
+            boxMesh.geometry = newBoxGeo ;
+            //console.log("torusParameters:", torusMesh.geometry.parameters.radius);
+        }
+
+        const boxFolder = gui.addFolder("box");
+        boxFolder.add(boxMesh.position,"x",-10,10);
+        boxFolder.add(boxMesh.position,"y",-10,10);
+        boxFolder.add(boxMesh.position,"z",-10,10);
+        boxFolder.add(boxData,"rotX",0,Math.PI * 2).onChange((value)=>{boxMesh.rotation.x = value});
+        boxFolder.add(boxData,"rotY",0,Math.PI * 2).onChange((value)=>{boxMesh.rotation.y = value});
+        boxFolder.add(boxData,"rotZ",0,Math.PI * 2).onChange((value)=>{boxMesh.rotation.z = value});
+        boxFolder.add(boxMesh.material,"wireframe",0,1);
+        boxFolder.add(boxMesh.material,"visible",0,1);
+
+        boxFolder.add(boxData,"width",1,10).onChange(newBoxGeo);
+        boxFolder.add(boxData,"height",1,10).onChange(newBoxGeo);
+        boxFolder.add(boxData,"depth",1,10).onChange(newBoxGeo);
+        boxFolder.add(boxData,"widthSegments",1,20).step(1).onChange(newBoxGeo);
+        boxFolder.add(boxData,"heightSegments",1,20).step(1).onChange(newBoxGeo);
+        boxFolder.add(boxData,"depthSegments",1,20).step(1).onChange(newBoxGeo);
+      
+        
+        const icosahedronData ={
+            rotX: 0,
+            rotY: 0,
+            rotZ: 0,
+            radius: 1,
+            detail: 0
+        };
+
+        const newIcosaGeo = ()=>{
+            const newIcosaGeo = new THREE.IcosahedronGeometry(icosahedronData.radius, icosahedronData.detail);
+            icosahedronMesh.geometry.dispose();
+            icosahedronMesh.geometry = newIcosaGeo ;
+            //console.log("torusParameters:", torusMesh.geometry.parameters.radius);
+        }
+
+        const icosahedronFolder = gui.addFolder("icosahedron");
+
+        icosahedronFolder.add(icosahedronMesh.position,"x",-10,10);
+        icosahedronFolder.add(icosahedronMesh.position,"y",-10,10);
+        icosahedronFolder.add(icosahedronMesh.position,"z",-10,10);
+        icosahedronFolder.add(icosahedronData,"rotX",0,Math.PI * 2).onChange((value)=>{icosahedronMesh.rotation.x = value});
+        icosahedronFolder.add(icosahedronData,"rotY",0,Math.PI * 2).onChange((value)=>{icosahedronMesh.rotation.y = value});
+        icosahedronFolder.add(icosahedronData,"rotZ",0,Math.PI * 2).onChange((value)=>{icosahedronMesh.rotation.z = value});
+        icosahedronFolder.add(icosahedronMesh.material,"wireframe",0,1);
+        icosahedronFolder.add(icosahedronMesh.material,"visible",0,1);
+        icosahedronFolder.add(icosahedronData,"radius",1,5).onChange(newIcosaGeo);
+        icosahedronFolder.add(icosahedronData,"detail",0,5,1).onChange(newIcosaGeo);
+
+        const torusData ={
+            radius: 1,
+            tube: 0.4,
+            radialSegments: 8,
+            tubularSegments: 6,
+            rotX: 0,
+            rotY: 0,
+            rotZ: 0
+
+        };
+
+        const newTorusGeo = ()=>{
+            const newTorusGeo = new THREE.TorusGeometry(torusData.radius, torusData.tube,torusData.radialSegments, torusData.tubularSegments);
+            torusMesh.geometry.dispose();
+            torusMesh.geometry = newTorusGeo ;
+            //console.log("torusParameters:", torusMesh.geometry.parameters.radius);
+        }
+
+        const torusFolder = gui.addFolder("torus");
+
+        torusFolder.add(torusMesh.position,"x",-10,10);
+        torusFolder.add(torusMesh.position,"y",-10,10);
+        torusFolder.add(torusMesh.position,"z",-10,10);
+        torusFolder.add(torusData,"rotX",0,Math.PI * 2).onChange((value)=>{torusMesh.rotation.x = value});
+        torusFolder.add(torusData,"rotY",0,Math.PI * 2).onChange((value)=>{torusMesh.rotation.y = value});
+        torusFolder.add(torusData,"rotZ",0,Math.PI * 2).onChange((value)=>{torusMesh.rotation.z = value});
+        torusFolder.add(torusMesh.material,"wireframe",0,1);
+        torusFolder.add(torusMesh.material,"visible",0,1);
+        torusFolder.add(torusData,"radius",1,5).onChange(newTorusGeo);
+        torusFolder.add(torusData,"tube",0.1,9).onChange(newTorusGeo);
+        torusFolder.add(torusData,"radialSegments",2,20).onChange(newTorusGeo);
+        torusFolder.add(torusData,"tubularSegments",2,20).onChange(newTorusGeo);
+        
+        const sphereData ={
+            rotX: 0,
+            rotY: 0,
+            rotZ: 0,
+            radius: 1,
+            widthSegments: 8,
+            heightSegments: 6,
+            phiStart: 0,
+            phiLength: Math.PI * 2,
+            thetaStart: 0,
+            thetaLength: Math.PI
+
+        };
+
+        const newSphereGeo = ()=>{
+            const newSphereGeo = new THREE.SphereGeometry(sphereData.radius, sphereData.widthSegments, sphereData.heightSegments,sphereData.phiStart,sphereData.phiLength,sphereData.thetaStart,sphereData.thetaLength);
+            sphereMesh.geometry.dispose();
+            sphereMesh.geometry = newSphereGeo ;
+            //console.log("torusParameters:", torusMesh.geometry.parameters.radius);
+        }
+
+        const sphereFolder = gui.addFolder("sphere");
+
+        sphereFolder.add(sphereMesh.position,"x",-10,10);
+        sphereFolder.add(sphereMesh.position,"y",-10,10);
+        sphereFolder.add(sphereMesh.position,"z",-10,10);
+        sphereFolder.add(sphereData,"rotX",0,Math.PI * 2).onChange((value)=>{sphereMesh.rotation.x = value});
+        sphereFolder.add(sphereData,"rotY",0,Math.PI * 2).onChange((value)=>{sphereMesh.rotation.y = value});
+        sphereFolder.add(sphereData,"rotZ",0,Math.PI * 2).onChange((value)=>{sphereMesh.rotation.z = value});
+        sphereFolder.add(sphereMesh.material,"wireframe",0,1);
+        sphereFolder.add(sphereMesh.material,"visible",0,1);
+        sphereFolder.add(sphereData,"radius",1,5).onChange(newSphereGeo);
+        sphereFolder.add(sphereData,"widthSegments",2,20).onChange(newSphereGeo);
+        sphereFolder.add(sphereData,"heightSegments",2,20).onChange(newSphereGeo);
+        sphereFolder.add(sphereData,"phiStart",0,Math.PI * 2).onChange(newSphereGeo);
+        sphereFolder.add(sphereData,"phiLength",0,Math.PI * 2).onChange(newSphereGeo);
+        sphereFolder.add(sphereData,"thetaStart",0,Math.PI * 2).onChange(newSphereGeo);
+        sphereFolder.add(sphereData,"thetaLength",Math.PI,Math.PI * 2).onChange(newSphereGeo);
+        
+        const cylinderData ={
+            rotX: 0,
+            rotY: 0,
+            rotZ: 0,
+            radiusTop:1,
+            radiusBottom: 1,
+            height: 1,
+            radialSegments: 8,
+            heightSegments: 1,
+            openEnded: false,
+            thetaStart: 0,
+            thetaLength: Math.PI * 2
+
+        };
+
+        const newCylinderGeo = ()=>{
+            const newCylinderGeo = new THREE.CylinderGeometry(cylinderData.radiusTop, cylinderData.radiusBottom, cylinderData.height, cylinderData.radialSegments, cylinderData.heightSegments, cylinderData.openEnded,cylinderData.thetaStart, cylinderData.thetaLength);
+            cylinderMesh.geometry.dispose();
+            cylinderMesh.geometry = newCylinderGeo ;
+            //console.log("torusParameters:", torusMesh.geometry.parameters.radius);
+        }
+
+        const cylinderFolder = gui.addFolder("cylinder");
+
+        cylinderFolder.add(cylinderMesh.position,"x",-10,10);
+        cylinderFolder.add(cylinderMesh.position,"y",-10,10);
+        cylinderFolder.add(cylinderMesh.position,"z",-10,10);
+        cylinderFolder.add(cylinderData,"rotX",0,Math.PI * 2).onChange((value)=>{cylinderMesh.rotation.x = value});
+        cylinderFolder.add(cylinderData,"rotY",0,Math.PI * 2).onChange((value)=>{cylinderMesh.rotation.y = value});
+        cylinderFolder.add(cylinderData,"rotZ",0,Math.PI * 2).onChange((value)=>{cylinderMesh.rotation.z = value});
+        cylinderFolder.add(cylinderMesh.material,"wireframe",0,1);
+        cylinderFolder.add(cylinderMesh.material,"visible",0,1);
+        cylinderFolder.add(cylinderData,"radiusTop",1,5).onChange(newCylinderGeo);
+        cylinderFolder.add(cylinderData,"radiusBottom",1,5).onChange(newCylinderGeo);
+        cylinderFolder.add(cylinderData,"height",1,5).onChange(newCylinderGeo);
+        cylinderFolder.add(cylinderData,"radialSegments",2,20).onChange(newCylinderGeo);
+        cylinderFolder.add(cylinderData,"heightSegments",2,20).onChange(newCylinderGeo);
+        cylinderFolder.add(cylinderData,"openEnded",0,1).onChange(newCylinderGeo);
+        cylinderFolder.add(cylinderData,"thetaStart",0,Math.PI * 2).onChange(newCylinderGeo);
+        cylinderFolder.add(cylinderData,"thetaLength",0,Math.PI * 2).onChange(newCylinderGeo);
+        
+        
+        function render(){
+            camera.lookAt(scene.position);
+            
+            boxMesh.rotation.y += 0.01;
+            boxMesh.geometry.parameters.depthSegments = 1;
+
+            renderer.render(scene,camera);
+        }
+
+        function animate(){
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+        
+        
+    </script>
+    
+</body>
+</html>

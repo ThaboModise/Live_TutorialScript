@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="PerlinNoise.js"></script>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE  from "three";
+        import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        document.body.appendChild(renderer.domElement);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1.0, 10000);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        const pointLight_1 = new THREE.PointLight();
+        scene.add(pointLight_1);
+
+        let geoArr = [
+            new THREE.BoxGeometry(), 
+            new THREE.SphereGeometry(), 
+            new THREE.OctahedronGeometry(), 
+            new THREE.IcosahedronGeometry(),
+            new THREE.TorusGeometry(),
+            new THREE.CapsuleGeometry(0.5),
+            new THREE.DodecahedronGeometry(),
+            new THREE.TetrahedronGeometry(),
+            new THREE.TorusKnotGeometry()
+        ];
+
+        function meshArray (shape, rangeMultiplier,wireframe){
+            let increment = Math.PI * 2 / 30;
+            let range = Math.PI * rangeMultiplier;
+            //console.log("range:", range / increment);
+
+            let meshArr = [];
+
+            for (let i = 0; i < range; i+= increment) {
+
+                const geo = shape;
+               
+                const mat = new THREE.MeshStandardMaterial({ emissive: 0x0000aa, wireframe: wireframe, color: Math.random() * 0xffffff});
+                const mesh = new THREE.Mesh(geo, mat);
+
+                meshArr.push(mesh);
+                scene.add(mesh);
+            }
+            console.log("meshArr:", meshArr[0]);
+            return meshArr;
+        }
+
+        let meshArr = meshArray(geoArr[Math.ceil(Math.random() * geoArr.length - 1)],30,false);
+        let meshArr2 = meshArray(geoArr[Math.ceil(Math.random() * geoArr.length) - 1],30,false);
+        let meshArr3 = meshArray(geoArr[Math.ceil(Math.random() * geoArr.length) - 1],30,false);
+
+        
+        camera.lookAt(scene.position);
+        camera.position.y = 20;
+        camera.position.z = 50;
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.update();
+
+        let t = 0;
+
+
+        function render(){ 
+            t += 0.005;
+            pointLight_1.position.y = Math.sin(t / 10) * 10;
+
+            for (let i = 0; i < meshArr.length; i++) {
+
+                meshArr[i].position.x = Math.cos(t + i * 0.2) * (i / 20);
+                meshArr[i].position.y = (-t + (i / 5)) * (i * 0.003);
+                meshArr[i].position.z = Math.sin(t + i * 0.2) * (i / 20);
+
+                meshArr[i].rotation.x = Math.sin(t * 3);
+                meshArr[i].rotation.y = Math.sin(t * 3);
+                meshArr[i].rotation.z = Math.sin(t * 3);
+
+                meshArr[i].scale.set(Math.abs(Math.sin(t) * 2 )+ 0.2, Math.abs(Math.sin(t) * 2) + 0.2, Math.abs(Math.sin(t) * 2) + 0.2); 
+            }
+
+            for (let i = 0; i < meshArr2.length; i++) {
+
+                meshArr2[i].position.x = Math.cos(t + i * 0.2) * (i / -20);
+                meshArr2[i].position.y = (-t + (i / 5)) * (i * -0.003);
+                meshArr2[i].position.z = Math.sin(t + i * 0.2) * (i / -20);
+
+                meshArr2[i].rotation.x = Math.sin(t * 3);
+                meshArr2[i].rotation.y = Math.sin(t * 3);
+                meshArr2[i].rotation.z = Math.sin(t * 3);
+
+                meshArr2[i].scale.set(Math.abs(Math.sin(t) * 2 )+ 0.2, Math.abs(Math.sin(t) * 2) + 0.2, Math.abs(Math.sin(t) * 2) + 0.2); 
+            }
+
+            for (let i = 0; i < meshArr3.length; i++) {
+
+                meshArr3[i].position.x = Math.cos(t + i * 0.2) * ((i / -5));
+                meshArr3[i].position.z = Math.sin(t + i * 0.2) * (i / -5);
+
+                meshArr3[i].rotation.x = Math.sin(t * 3);
+                meshArr3[i].rotation.y = Math.sin(t * 3);
+                meshArr3[i].rotation.z = Math.sin(t * 3);
+
+                meshArr3[i].scale.set(Math.abs(Math.sin(t * 0.05) * 2 )+ 0.2, Math.abs(Math.sin(t * 0.05) * 2) + 0.2, Math.abs(Math.sin(t * 0.05) * 2) + 0.2); 
+            }
+
+
+            renderer.render(scene,camera);
+            requestAnimationFrame(render); 
+        }
+
+        render();
+
+    </script>
+</body>
+</html>

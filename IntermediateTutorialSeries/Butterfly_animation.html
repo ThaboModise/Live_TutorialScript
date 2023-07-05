@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE  from "../three.js-master/build/three.module.js";
+		import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import { UnrealBloomPass } from "../three.js-master/examples/jsm/postprocessing/UnrealBloomPass.js";
+        import { FilmPass } from "../three.js-master/examples/jsm/postprocessing/FilmPass.js";
+        import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+        import { ShaderPass } from "../three.js-master/examples/jsm/postprocessing/ShaderPass.js";
+        import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+        import { DotScreenShader } from "../three.js-master/examples/jsm/shaders/DotScreenShader.js";
+        import { FilmShader } from "../three.js-master/examples/jsm/shaders/FilmShader.js";
+        import { LuminosityShader } from "../three.js-master/examples/jsm/shaders/LuminosityShader.js";
+        import { SobelOperatorShader } from "../three.js-master/examples/jsm/shaders/SobelOperatorShader.js";
+        import { CopyShader } from "../three.js-master/examples/jsm/shaders/CopyShader.js";
+        
+        const renderer = new THREE.WebGLRenderer({canvas:canvas, antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x000000);
+
+        const camera = new THREE.PerspectiveCamera(40,parseInt(window.getComputedStyle(canvas).getPropertyValue("width"))/ parseInt(window.getComputedStyle(canvas).getPropertyValue("height")),0.1,1000);
+        const scene = new THREE.Scene();
+        
+        const renderPass = new RenderPass(scene, camera);
+
+        const composer = new EffectComposer(renderer);
+        const dotComposer = new EffectComposer(renderer);
+        const filmComposer = new EffectComposer(renderer);
+        const sobelComposer = new EffectComposer(renderer);
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.0, 0.6, 0.1 );
+        const dotEffect = new ShaderPass(DotScreenShader);
+        dotEffect.uniforms["scale"].value = 4;
+
+        const luminosityEffect = new ShaderPass(LuminosityShader);
+        const sobelEfect = new ShaderPass(SobelOperatorShader);
+        sobelEfect.uniforms["resolution"].value.x = window.innerWidth * window.devicePixelRatio;
+        sobelEfect.uniforms["resolution"].value.y = window.innerHeight * window.devicePixelRatio;
+
+        const filmPass = new FilmPass(0.9, 0.9, 64, false);
+
+        const copyEffect = new ShaderPass(CopyShader);
+
+        const capsuleMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.15), new THREE.MeshBasicMaterial({color: 0x440022}));
+
+        const circleGeo = new THREE.CircleGeometry(2,3);
+        const circleMat_1 = new THREE.MeshBasicMaterial({color:0x00ff00, side: THREE.DoubleSide});
+        const circleMesh_1 = new THREE.Mesh(circleGeo, circleMat_1);
+
+        const circleMat_2 = new THREE.MeshBasicMaterial({color:0x0000ff, side: THREE.DoubleSide});
+        const circleMesh_2 = new THREE.Mesh(circleGeo, circleMat_2);
+
+        const circleMesh_3 = circleMesh_1.clone();
+        const circleMesh_4 = circleMesh_2.clone();
+
+        const sphereGeo = new THREE.SphereGeometry(70);
+
+        const wingGrp_1 = new THREE.Group();
+        const wingGrp_2 = new THREE.Group();
+
+        const leftWingRotation = new THREE.Object3D();
+        const rightWingRotation = new THREE.Object3D();
+
+        const butterFlyGrp = new THREE.Group();
+        butterFlyGrp.attach(leftWingRotation);
+        butterFlyGrp.attach(rightWingRotation);
+        butterFlyGrp.attach(capsuleMesh);
+
+        leftWingRotation.attach(wingGrp_1);
+        rightWingRotation.attach(wingGrp_2);
+
+        wingGrp_1.attach(circleMesh_1);
+        wingGrp_1.attach(circleMesh_2);
+
+        wingGrp_2.attach(circleMesh_3);
+        wingGrp_2.attach(circleMesh_4);
+
+        const position = sphereGeo.attributes.position;
+        
+        const indices = [];
+
+        for (let i = 0; i < position.array.length; i+=3) {
+            let pos = new THREE.Vector3(position.array[i],position.array[i + 1], position.array[i + 2]);
+            indices.push(pos);
+        }
+
+        const curve = new THREE.CatmullRomCurve3( [
+            new THREE.Vector3( -15.5, 30.3, 41 ),
+            new THREE.Vector3( 15.5, 30.8, 41 ),
+            new THREE.Vector3( 15.5, 30.3, -41 ),
+            new THREE.Vector3( -15.5, 30.8, -41 ),
+        ] );
+        
+        curve.curveType = "centripetal";
+        curve.closed = true;
+
+        const tubeGeo = new THREE.TubeBufferGeometry(curve, 10, 3, 6, true);
+        const tubeMaterial = new THREE.MeshBasicMaterial({color:0x00aaff, wireframe: true, side: THREE.DoubleSide, transparent: true, opacity: 0});
+        const tubeMesh = new THREE.Mesh(tubeGeo, tubeMaterial);
+
+        const clock = new THREE.Clock();
+        
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+        composer.addPass(copyEffect);
+
+        dotComposer.addPass(renderPass);
+        dotComposer.addPass(dotEffect);
+        dotComposer.addPass(bloomPass);
+        dotComposer.addPass(copyEffect);
+
+        filmComposer.addPass(renderPass);
+        filmComposer.addPass(bloomPass);
+        filmComposer.addPass(filmPass);
+        filmComposer.addPass(copyEffect);
+
+        sobelComposer.addPass(renderPass);
+        sobelComposer.addPass(luminosityEffect)
+        sobelComposer.addPass(sobelEfect);
+        sobelComposer.addPass(bloomPass);
+        sobelComposer.addPass(copyEffect);
+
+        const orbs = [];
+
+        for (let i = 0; i < indices.length; i++) {
+            let orb = new THREE.Mesh(new THREE.SphereGeometry(0.01), new THREE.MeshBasicMaterial({color: 0xaa55ff}))
+            scene.add(orb);
+            
+            let pos = indices[Math.ceil(Math.random() * indices.length) ];
+            if (pos) {
+                orb.position.set(pos.x, pos.y, pos.z );
+                let scale = Math.ceil(Math.random() * 10 + 1);
+                orb.scale.set(scale, scale, scale);
+            }
+            
+            orbs.push(orb);
+        }
+
+        scene.add(butterFlyGrp);
+
+        scene.add(camera);
+       
+        scene.add(tubeMesh);
+
+        butterFlyGrp.scale.set(0.5,0.5,0.5);
+        butterFlyGrp.rotation.x = Math.PI * 0.5;
+    
+        circleMesh_1.position.y = -1;
+        circleMesh_2.position.y = 1;
+
+        circleMesh_3.position.y = -1;
+        circleMesh_4.position.y = 1;
+
+        circleMesh_1.rotation.z = Math.PI * 0.18;
+        circleMesh_2.rotation.z = Math.PI * -0.18;
+
+        circleMesh_3.rotation.z = Math.PI * 0.18;
+        circleMesh_4.rotation.z = Math.PI * -0.18;
+
+        wingGrp_1.position.x = -1.5;
+        wingGrp_2.position.x = 1.5;
+
+        wingGrp_2.rotation.y = Math.PI * 1;
+
+        camera.position.z = 10;
+        camera.position.y = 0;
+        camera.lookAt(scene.position);
+
+
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        orbit.update();
+        orbit.addEventListener("change", render);
+        
+        function onWindowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener("resize", onWindowResize);
+
+        function render(){
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            camera.lookAt(butterFlyGrp.position);
+
+            const time = clock.getElapsedTime();
+            const  looptime = 10;
+            const t = (time % looptime)/ looptime;
+            const  t2 = ((time + 0.1)% looptime) / looptime;
+            const  pos = tubeMesh.geometry.parameters.path.getPointAt(t);
+            const  pos2 =   tubeMesh.geometry.parameters.path.getPointAt(t2);
+            
+            camera.position.copy(pos);
+
+            butterFlyGrp.position.y = Math.sin(t) * 2;
+            leftWingRotation.rotation.y = Math.sin(t * 300) * 1;
+            rightWingRotation.rotation.y = Math.sin(t * 300) * -1;
+           
+            sobelComposer.render(scene, camera);
+            
+        }
+
+        function animate(){
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+        
+    </script>
+    
+</body>
+</html>

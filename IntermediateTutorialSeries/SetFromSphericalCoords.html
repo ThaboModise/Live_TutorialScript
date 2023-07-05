@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin:0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <canvas id="canvas"></canvas>
+   
+    <script type="module">
+        import * as THREE  from "../three.js-master/build/three.module.js";
+		import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import { UnrealBloomPass } from "../three.js-master/examples/jsm/postprocessing/UnrealBloomPass.js";
+        import { FilmPass } from "../three.js-master/examples/jsm/postprocessing/FilmPass.js";
+        import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+        import { ShaderPass } from "../three.js-master/examples/jsm/postprocessing/ShaderPass.js";
+        import { AfterimagePass } from "../three.js-master/examples/jsm/postprocessing/AfterimagePass.js";
+        import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+        import { DotScreenShader } from "../three.js-master/examples/jsm/shaders/DotScreenShader.js";
+        import { FilmShader } from "../three.js-master/examples/jsm/shaders/FilmShader.js";
+        import { LuminosityShader } from "../three.js-master/examples/jsm/shaders/LuminosityShader.js";
+        import { SobelOperatorShader } from "../three.js-master/examples/jsm/shaders/SobelOperatorShader.js";
+        import { GUI } from "../three.js-master/examples/jsm/libs/lil-gui.module.min.js";
+
+        const renderer = new THREE.WebGLRenderer({canvas:canvas, antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x000000);
+
+        const camera = new THREE.PerspectiveCamera(70,parseInt(window.getComputedStyle(canvas).getPropertyValue("width"))/ parseInt(window.getComputedStyle(canvas).getPropertyValue("height")),0.1,10000);
+        const scene = new THREE.Scene(); 
+        
+        let spotLight;
+
+        new THREE.TextureLoader().load("../resources/images/Philosopher_BG.jpg",
+            function(texture){
+                console.log("texture:", texture);
+                spotLight = new THREE.SpotLight();
+                spotLight.map = texture;
+                spotLight.penumbra = 0;
+                spotLight.angle = 1;
+ 
+                scene.add(spotLight);
+                spotLight.position.y = 0;
+                spotLight.position.z = 10;
+            }
+        );
+
+        const renderPass = new RenderPass(scene, camera);
+
+        const afterImageComposer = new EffectComposer(renderer);
+
+        const afterImagePass = new AfterimagePass();
+        afterImagePass.uniforms["damp"].value = 0.975;
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.7, 0.9, 0.5 );
+        const dotEffect = new ShaderPass(DotScreenShader);
+        dotEffect.uniforms["scale"].value = 4;
+
+        const luminosityEffect = new ShaderPass(LuminosityShader);
+        const sobelEfect = new ShaderPass(SobelOperatorShader);
+        sobelEfect.uniforms["resolution"].value.x = window.innerWidth * window.devicePixelRatio;
+        sobelEfect.uniforms["resolution"].value.y = window.innerHeight * window.devicePixelRatio;
+
+        const filmPass = new FilmPass(0.9, 0.9, 64, false);
+        
+        const sphereGeo = new THREE.SphereGeometry();
+        const sphereMat = new THREE.MeshStandardMaterial({color:0x00ff00});
+        const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+        const orbMat = new THREE.MeshStandardMaterial({color:0xff0000, emissive: 0xff0000, wireframe: true});
+
+        afterImageComposer.addPass(renderPass);
+        afterImageComposer.addPass(afterImagePass);
+        afterImageComposer.addPass(bloomPass);
+        afterImageComposer.addPass(sobelEfect);
+        afterImageComposer.addPass(dotEffect);
+        afterImageComposer.addPass(filmPass);
+
+        camera.position.z = 18;
+        camera.position.y = 2;
+        const vector = new THREE.Vector3();
+        const grp = new THREE.Object3D();
+        const planeArr = [];
+        
+        scene.add(grp);
+        grp.position.y = 0;
+        grp.position.x = 0;        
+
+        let phi;
+        let theta; 
+
+        for (let index = 0; index < 200; index++) {
+           
+            const geo = new THREE.PlaneGeometry(2.0, 2.0);
+            const mat = new THREE.MeshStandardMaterial({color: 0xff66ff,side: THREE.DoubleSide});
+            const mesh = new THREE.Mesh(geo, mat);
+
+            planeArr.push(mesh);
+        
+            grp.add(mesh);  
+        }
+
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        orbit.update();
+        
+        function onWindowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener("resize", onWindowResize);
+        
+        
+        let time = 0;
+
+        function render(){
+            
+            time += 0.005;
+           
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            //set from spherical coords
+            for (let i = 0; i < planeArr.length; i++) {
+                
+                phi = Math.acos(  -1 + ( 2 * i ) / planeArr.length );
+                theta = Math.sqrt( planeArr.length * Math.PI ) * phi;
+            
+                planeArr[i].position.setFromSphericalCoords( 8, phi, theta);
+              
+                if (i % 2 === 0) {
+                    planeArr[i].material.color = new THREE.Color(0x00aaff); 
+                    
+                }
+
+                if (i % 3 === 0) {
+                    planeArr[i].material.color = new THREE.Color(0xffffff); 
+                    
+                }
+                
+                vector.copy( planeArr[i].position ).multiplyScalar( 4 );
+                planeArr[i].lookAt( vector);
+                grp.rotation.y = time
+                
+            }
+        
+            afterImageComposer.render();
+            
+            renderer.render(scene, camera);
+            
+        }
+
+        function animate(){
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+        
+    </script>
+    
+</body>
+</html>

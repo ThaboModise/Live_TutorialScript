@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+    </style>
+</head>
+<body>
+   
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE  from "../three.js-master/build/three.module.js";
+        import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        document.body.appendChild(renderer.domElement);
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1.0, 1000);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        let spotLight;
+        let spotLight2;
+
+        new THREE.TextureLoader().load("../resources/images/logo_Icon.png",
+            function(texture){
+                console.log("texture:", texture);
+                spotLight = new THREE.SpotLight();
+                spotLight.map = texture;
+                spotLight.penumbra = 0;
+                spotLight.angle = 1;
+
+                console.log("Spotlight:", spotLight);
+
+                spotLight2 = spotLight.clone();
+                spotLight2.color = new THREE.Color(0x0000ff);
+                scene.add(spotLight);
+                scene.add(spotLight2);
+                spotLight.position.z = 30;
+
+                spotLight2.position.z = -30;
+                spotLight2.rotation.y = Math.PI * 0.5;
+            }
+        );
+
+        let boxArr = [];
+        let matGRP = [new THREE.MeshStandardMaterial({metalness: 1, roughness: 0.7, wireframe: false, specular: 0.9}), new THREE.MeshLambertMaterial()]
+
+        for (let index = 0; index < 10000; index++) {
+            
+            let mesh = new THREE.Mesh(new THREE.BoxGeometry(), matGRP[1]);
+            boxArr.push(mesh);
+            
+        }
+
+        let yCount = 0;
+
+        for (let i = 0; i < boxArr.length; i+= 100) {
+            
+            for (let j = 0; j < boxArr.length / 100; j++) {
+                scene.add(boxArr[j + i]);
+                boxArr[j + i].position.set(j- 50, yCount - 50, 0);
+                
+            }
+            yCount++;
+        }
+    
+        function bufferWaves(waveSize, magnitude){
+            const time = performance.now() * 0.005;
+
+            let vec3 = new THREE.Vector3();
+            let center = new THREE.Vector3();
+
+            for (let i = 0; i < boxArr.length; i++) {
+                
+                boxArr[i].rotation.set(time * 0.01,time * 0.02,time * 0.03);
+                boxArr[i].position.z = Math.sin((i /- waveSize) * 0.01 + (time)) + magnitude;
+                
+            }
+        }
+
+
+        camera.lookAt(scene.position);
+        camera.position.z = 70;
+        camera.position.y = 2;
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.update();
+
+        function onWindowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener("resize", onWindowResize);
+    
+        function render(){ 
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            requestAnimationFrame(render);
+            bufferWaves(0.15, 3.0);
+            renderer.render(scene,camera);
+        }
+        render();
+        
+    </script>
+    
+</body>
+</html>

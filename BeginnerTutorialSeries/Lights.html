@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+   
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE from "../three.js-master/build/three.module.js";
+        import { GUI } from "../three.js-master/examples/jsm/libs/lil-gui.module.min.js";
+        import { RectAreaLightHelper } from "../three.js-master/examples/jsm/helpers/RectAreaLightHelper.js";
+        
+        //To render the scene contents
+        const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.VSMShadowMap;
+
+        //To view the scene and it's contents
+        const camera = new THREE.PerspectiveCamera(45, parseInt(window.getComputedStyle(canvas).getPropertyValue("width")) / parseInt(window.getComputedStyle(canvas).getPropertyValue("height")), 1.0, 1000);
+        const scene = new THREE.Scene();
+
+        const cubeAlphMap = new THREE.TextureLoader().load("../resources/images/connectedDots_mask.jpg");
+
+        const cubeGeo = new THREE.BoxGeometry(10,10,10,10,10,10);
+        const cubeMat = new THREE.MeshStandardMaterial({color: 0x00ff00, wireframe: true, metalness:0.8, roughness:0.8, alphaMap: cubeAlphMap,alphaTest: 0.5,side: THREE.DoubleSide});
+        const cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
+
+        cubeMesh.castShadow = true;
+        cubeMesh.receiveShadow = true;
+
+        const bgCubeGeo = new THREE.BoxGeometry(80,50,80);
+        const bgCubeMat = new THREE.MeshStandardMaterial({color: 0xffffff, /*wireframe: true,*/ metalness: 0.8,roughness: 0.8, side: THREE.BackSide, /*emissive: 0x00ff00*/});
+        const bgCubeMesh = new THREE.Mesh(bgCubeGeo, bgCubeMat);
+        
+        bgCubeMesh.receiveShadow = true;
+        bgCubeMesh.castShadow = false;
+
+        scene.add(cubeMesh);
+        scene.add(bgCubeMesh);
+
+        let lightIndex;
+
+        const lightTypes = {
+            none: null,
+            pointLight:new THREE.PointLight(0xff0000),
+            spotLight: new THREE.SpotLight(0x00ff00),
+            directionalLight: new THREE.DirectionalLight(0x0000ff),
+            ambientLight: new THREE.AmbientLight(0xffff00),
+            rectAreaLight: new THREE.RectAreaLight(0x00ffff),
+            hemisphereLight: new THREE.HemisphereLight(0xff00ff)
+        }
+
+        const lightHelperTypes = {
+            PointLightHelper: new THREE.PointLightHelper(lightTypes.pointLight, 1),
+            SpotLightHelper: new THREE.SpotLightHelper(lightTypes.spotLight),
+            DirectionalLightHelper: new THREE.DirectionalLightHelper(lightTypes.directionalLight, 1),
+            RectAreaLightHelper: new RectAreaLightHelper(lightTypes.rectAreaLight),
+            HemisphereLightHelper: new THREE.HemisphereLightHelper(lightTypes.hemisphereLight, 1)
+        }
+
+        function addLightHelper(lightObj){
+            for(let key in lightHelperTypes){
+                let lightHelperMatch = key.toLowerCase().search(lightObj.type.toLowerCase());
+                //console.log("light helper types:",lightHelperTypes[key]);
+                //console.log("yes light matches helper keys:", key.toLowerCase().search(lightObj.type.toLowerCase()));
+                if (lightObj !== null & lightHelperMatch !== -1) {
+                    console.log("yes light matches helper keys:");
+                    scene.add(lightHelperTypes[key]);
+                }
+            }
+        }
+
+        const lightTypesList = [];
+
+        for (const key in lightTypes) {
+            lightTypesList.push(key);
+        }
+
+        function removeCurrentLightInScene(){
+            for (const key in scene.children) {
+                /*if (scene.children[key].light) {
+                    console.log("light helper:", scene.children[key]);
+                    scene.remove(scene.children[key]);
+                }*/
+                let resultLight = scene.children[key].type.search(/light/i);
+                if (Math.sign(resultLight) === 1) {
+                    scene.remove(scene.children[key]);
+                }   
+            }
+        }
+
+        function removeLightHelper(){
+            for(const key in scene.children){
+                if (scene.children[key].light) {
+                    console.log("light helper:", scene.children[key]);
+                    scene.remove(scene.children[key]);
+                    
+                }
+            }
+        }
+
+        function addLightProperties(currentLightObj){
+            if (currentLightObj !== null) {
+                switch (currentLightObj.type) {
+                    case "PointLight":
+                        removeLightGuiFolder();
+                        lightTypeDataSet.pointLightFolder = gui.addFolder("PointLight_Ctrls");
+
+                        lightTypeDataSet.pointLightFolder.add(lightData,"xPos", -50, 50,1).onChange((value)=>{currentLightObj.position.x = value});
+                        lightTypeDataSet.pointLightFolder.add(lightData,"yPos", -50, 50,1).onChange((value)=>{currentLightObj.position.y = value});
+                        lightTypeDataSet.pointLightFolder.add(lightData,"zPos", -50, 50,1).onChange((value)=>{currentLightObj.position.z = value});
+                       
+                        lightTypeDataSet.pointLightFolder.addColor(lightData,"color").onChange((value)=>{currentLightObj.color.set(value)});
+                        lightTypeDataSet.pointLightFolder.add(lightData,"intensity",0,50,1).onChange((value)=>{currentLightObj.intensity = value});
+                        lightTypeDataSet.pointLightFolder.add(lightData,"distance",0,500,1).onChange((value)=>{
+                            currentLightObj.distance = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"castShadow",0,1,0).onChange((value)=>{
+                            currentLightObj.castShadow = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"shadowMapSizeWidth",258,1024,1).onChange((value)=>{
+                            currentLightObj.shadow.mapSize.width = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"shadowMapSizeHeight",258,1024,1).onChange((value)=>{
+                            currentLightObj.shadow.mapSize.height = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"shadowCameraNear",0.1,1.0).onChange((value)=>{
+                            currentLightObj.shadow.camera.near = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"shadowCameraFar",100,1000).onChange((value)=>{
+                            currentLightObj.shadow.camera.far = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"blurSamples",0,25).step(1).onChange((value)=>{
+                            currentLightObj.shadow.blurSamples = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"radius",0,25).onChange((value)=>{
+                            currentLightObj.shadow.radius = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"bias",-0.005, 0).onChange((value)=>{
+                            currentLightObj.shadow.bias = value;
+                        });
+                        lightTypeDataSet.pointLightFolder.add(lightData,"decay",1,2,1).onChange((value)=>{
+                            currentLightObj.decay = value;
+                        });
+                        
+                        break;
+                    case "SpotLight":
+                        removeLightGuiFolder();
+                        //console.log("lightType:",lightTypeDataSet.pointLightFolder);
+                        lightTypeDataSet.spotLightFolder = gui.addFolder("SpotLight_Ctrls");
+
+                        lightTypeDataSet.spotLightFolder.add(lightData,"xPos", -50, 50, 1).onChange((value)=>{currentLightObj.position.x = value});
+                        lightTypeDataSet.spotLightFolder.add(lightData,"yPos", -50, 50, 1).onChange((value)=>{currentLightObj.position.y = value});
+                        lightTypeDataSet.spotLightFolder.add(lightData,"zPos", -50, 50, 1).onChange((value)=>{currentLightObj.position.z = value});
+                       
+                        lightTypeDataSet.spotLightFolder.addColor(lightData,"color").onChange((value)=>{currentLightObj.color.set(value)});
+                        lightTypeDataSet.spotLightFolder.add(lightData,"intensity", 0,50, 1).onChange((value)=>{currentLightObj.intensity = value});
+                        lightTypeDataSet.spotLightFolder.add(lightData,"distance", 0,500, 1).onChange((value)=>{
+                            currentLightObj.distance = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"castShadow", 0, 1).onChange((value)=>{
+                            currentLightObj.castShadow = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"shadowMapSizeWidth",258, 1024, 1).onChange((value)=>{
+                            currentLightObj.shadow.mapSize.width = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"shadowMapSizeHeight",258, 1024, 1).onChange((value)=>{
+                            currentLightObj.shadow.mapSize.height = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"shadowCameraNear",0.1, 1.0).onChange((value)=>{
+                            currentLightObj.shadow.camera.near = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"shadowCameraFar",100, 1000).onChange((value)=>{
+                            currentLightObj.shadow.camera.far = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"bias",-0.005, 0).onChange((value)=>{
+                            currentLightObj.shadow.bias = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"shadowFocus", 0, 5, 1).onChange((value)=>{
+                            currentLightObj.shadow.focus = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"angle",0,Math.PI / 2).onChange((value)=>{
+                            currentLightObj.angle = value;
+                        });
+                        lightTypeDataSet.spotLightFolder.add(lightData,"penumbra",0, 1).onChange((value)=>{
+                            currentLightObj.penumbra = value;
+                        });
+
+                        lightTypeDataSet.spotLightFolder.add(lightData,"decay",1,2).onChange((value)=>{
+                            currentLightObj.decay = value;
+                        })
+                        break;
+
+                    case "DirectionalLight":
+                        removeLightGuiFolder();
+                        //console.log("lightType:",lightTypeDataSet.pointLightFolder);
+                        lightTypeDataSet.directionalLightFolder = gui.addFolder("DirectionalLight_Ctrls");
+
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"xPos", -50, 50).onChange((value)=>{currentLightObj.position.x = value});
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"yPos", -50, 50).onChange((value)=>{currentLightObj.position.y = value});
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"zPos", -50, 50).onChange((value)=>{currentLightObj.position.z = value});
+                       
+                        lightTypeDataSet.directionalLightFolder.addColor(lightData,"color").onChange((value)=>{currentLightObj.color.set(value)});
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"intensity",0,10).onChange((value)=>{currentLightObj.intensity = value});
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"castShadow",0,1,0).onChange((value)=>{
+                            currentLightObj.castShadow = value;
+                        });
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"shadowMapSizeWidth",258,1024,1).onChange((value)=>{
+                            currentLightObj.shadow.mapSize.width = value;
+                        });
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"shadowMapSizeHeight",258,1024,1).onChange((value)=>{
+                            currentLightObj.shadow.mapSize.height = value;
+                        });
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"shadowCameraNear",0.1,1.0).onChange((value)=>{
+                            currentLightObj.shadow.camera.near = value;
+                        });
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"shadowCameraFar",100,1000).onChange((value)=>{
+                            currentLightObj.shadow.camera.far = value;
+                        });
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"blurSamples",0,25).step(1).onChange((value)=>{
+                            currentLightObj.shadow.blurSamples = value;
+                        });
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"radius",0,25).onChange((value)=>{
+                            currentLightObj.shadow.radius = value;
+                        });
+                        lightTypeDataSet.directionalLightFolder.add(lightData,"bias",-0.005, 0).onChange((value)=>{
+                            currentLightObj.shadow.bias = value;
+                        });
+                       
+                        break;
+                    case "AmbientLight":
+                        removeLightGuiFolder();
+                        //console.log("lightType:",lightTypeDataSet.pointLightFolder);
+                        lightTypeDataSet.ambientLightFolder = gui.addFolder("AmbientLight_Ctrls");
+
+                        lightTypeDataSet.ambientLightFolder.addColor(lightData,"color").onChange((value)=>{currentLightObj.color.set(value)});
+                        lightTypeDataSet.ambientLightFolder.add(lightData,"intensity",0,10).onChange((value)=>{currentLightObj.intensity = value});
+                        
+                        break;
+                    case "RectAreaLight":
+                        removeLightGuiFolder();                       
+                        //console.log("lightType:",lightTypeDataSet.pointLightFolder);
+                        lightTypeDataSet.rectAreaLightFolder = gui.addFolder("RectAreaLight_Ctrls");
+
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"xPos", -50, 50).onChange((value)=>{currentLightObj.position.x = value});
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"yPos", -50, 50).onChange((value)=>{currentLightObj.position.y = value});
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"zPos", -50, 50).onChange((value)=>{currentLightObj.position.z = value});
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"xRot", - Math.PI * 2, Math.PI * 2).onChange((value)=>{currentLightObj.rotation.x = value});
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"yRot", - Math.PI * 2, Math.PI * 2).onChange((value)=>{currentLightObj.rotation.y = value});
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"zRot", - Math.PI * 2, Math.PI * 2).onChange((value)=>{currentLightObj.rotation.z = value});
+
+                        lightTypeDataSet.rectAreaLightFolder.addColor(lightData,"color").onChange((value)=>{currentLightObj.color = value});
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"intensity",0,10).onChange((value)=>{currentLightObj.intensity = value});
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"width",0,20).onChange((value)=>{currentLightObj.width = value});
+                        lightTypeDataSet.rectAreaLightFolder.add(lightData,"height",0,20).onChange((value)=>{currentLightObj.height = value});
+                        
+                        break;
+                    case "HemisphereLight":
+                        removeLightGuiFolder();
+                        //console.log("lightType:",lightTypeDataSet.pointLightFolder);
+                        lightTypeDataSet.hemisphereLightFolder = gui.addFolder("HemisphereLight_Ctrls");
+
+                        lightTypeDataSet.hemisphereLightFolder.addColor(lightData,"skyColor").onChange((value)=>{currentLightObj.color.setHex(value.toString().replace("#","0x"))});
+                        lightTypeDataSet.hemisphereLightFolder.addColor(lightData,"groundColor").onChange((value)=>{currentLightObj.groundColor.setHex(value.toString().replace("#","0x"))});
+                        lightTypeDataSet.hemisphereLightFolder.add(lightData,"intensity",0,10).onChange((value)=>{currentLightObj.intensity = value});
+                        break;
+                        
+                default:
+                    break;
+            }
+            }
+            
+        }
+        
+        function addLights(value){
+            removeLightHelper();
+            removeCurrentLightInScene();
+            let currentLight = lightTypes[value];
+            if (currentLight !== null) {
+                
+                scene.add(currentLight);
+               
+                //currentLight.target = cubeMesh;
+                currentLight.position.y = 0;
+                addLightHelper(currentLight);
+                addLightProperties(currentLight);
+            }
+        }
+
+        camera.position.y = 10;
+        camera.position.z = 50;
+        camera.lookAt(scene.position);
+
+        const gui = new GUI();
+
+        const lightData = {
+            xPos: 0,
+            yPos: 0,
+            zPos: 0,
+            xRot: 0,
+            yRot: 0,
+            zRot: 0,
+            lightType: lightTypesList[0],
+            color: "#ffffff",
+            intensity: 1,
+            distance: 0,
+            angle: Math.PI / 2,
+            penumbra: 0,
+            width: 10,
+            height: 10,
+            skyColor: "#ffffff",
+            groundColor: "#ffffff",
+            decay: 1,
+            castShadow: false,
+            shadowMapSizeWidth: 512,
+            shadowMapSizeHeight: 512,
+            shadowCameraNear: 1.0,
+            shadowCameraFar: 1000,
+            shadowFocus: 1,
+            bias:-0.005,
+            radius:0,
+            blurSamples: 1
+
+        }
+
+        const lightFolder = gui.addFolder("Light");
+        lightFolder.add(lightData,"lightType",lightTypesList).onChange((value)=>{addLights(value)});
+        
+        const lightTypeDataSet = {
+            pointLightFolder: null,
+            spotLightFolder: null,
+            directionalLightFolder: null,
+            ambientLightFolder: null,
+            rectAreaLightFolder: null,
+            hemisphereLightFolder: null
+        }
+
+        function removeLightGuiFolder(){
+            for(let key in lightTypeDataSet){
+                if (lightTypeDataSet[key] !== null) {
+                    gui.removeFolder(lightTypeDataSet[key]);
+                    lightTypeDataSet[key] = null;
+                }
+            }
+        }
+
+        function render(){
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+            cubeMesh.rotation.y += 0.01;
+            cubeMesh.rotation.x += 0.01;
+            //console.log("lightIndex:",sceneLights[lightIndex]);
+        }
+
+        function animate(){
+            
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

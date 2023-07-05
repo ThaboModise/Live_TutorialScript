@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <script src="../es_module_shims/es_module_shims.js"></script>
+    <script type="importmap">
+        {
+				"imports": {
+					"three": "../three.js-master/build/three.module.js",
+					"three/addons/": "../three.js-master/examples/jsm/"
+				}
+        }
+    </script>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls} from "three/addons/controls/OrbitControls.js";
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xaaaaaa);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1.0, 1000);
+
+        const octaGeo = new THREE.OctahedronGeometry(2);
+        const octaMat = new THREE.MeshStandardMaterial();
+        const octaMesh = new THREE.Mesh(octaGeo, octaMat);
+
+        const octaMesh_2 = octaMesh.clone();
+        const octaMesh_3 = octaMesh.clone();
+        const octaMesh_4 = octaMesh.clone();
+        const octaMesh_5 = octaMesh.clone();
+        const octaMesh_6 = octaMesh.clone();
+        const octaMesh_7 = octaMesh.clone();
+        const octaMesh_8 = octaMesh.clone();
+        const octaMesh_9 = octaMesh.clone();
+        const octaMesh_10 = octaMesh.clone();
+        const octaMesh_11 = octaMesh.clone();
+        const octaMesh_12 = octaMesh.clone();
+        const octaMesh_13 = octaMesh.clone();
+
+        const pointLight_1 = new THREE.PointLight(0xff0000);
+        const pointLight_2 = new THREE.PointLight(0x00ff00);
+        const pointLight_3 = new THREE.PointLight(0x0000ff);
+        const pointLight_4 = new THREE.PointLight(0xaa00aa);
+
+        const obj_1 = new THREE.Object3D();
+        const obj_2 = new THREE.Object3D();
+
+
+        scene.add(
+            octaMesh,
+            octaMesh_2,
+            octaMesh_3,
+            octaMesh_4,
+            octaMesh_5,
+            octaMesh_6,
+            octaMesh_7,
+            octaMesh_8,
+            octaMesh_9,
+            octaMesh_10,
+            octaMesh_11,
+            octaMesh_12,
+            octaMesh_13
+        );
+
+        scene.add(obj_1, obj_2)
+
+        octaMesh.attach(octaMesh_10);
+        octaMesh.attach(octaMesh_11);
+        octaMesh.attach(octaMesh_12);
+        octaMesh.attach(octaMesh_13);
+
+        obj_1.attach(octaMesh_6);
+        obj_1.attach(octaMesh_7);
+        obj_1.attach(octaMesh_8);
+        obj_1.attach(octaMesh_9);
+        console.log("obj1:", obj_1);
+
+        obj_2.attach(octaMesh_5);
+        obj_2.attach(octaMesh_4);
+        obj_2.attach(octaMesh_2);
+        obj_2.attach(octaMesh_3);
+
+
+        scene.add(pointLight_1, pointLight_2, pointLight_3, pointLight_4 );
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.update();
+        //controls.addEventListener("change", render);
+
+
+        camera.lookAt(scene.position);
+
+        
+        octaMesh_2.scale.set(0.5,0.5,0.5);
+        octaMesh_3.scale.set(0.5,0.5,0.5);
+        octaMesh_4.scale.set(0.5,0.5,0.5);
+        octaMesh_5.scale.set(0.5,0.5,0.5);
+        octaMesh_6.scale.set(0.75,0.75,0.75);
+        octaMesh_7.scale.set(0.75,0.75,0.75);
+        octaMesh_8.scale.set(0.75,0.75,0.75);
+        octaMesh_9.scale.set(0.75,0.75,0.75);
+        octaMesh_10.scale.set(0.75,0.75,0.75);
+        octaMesh_11.scale.set(0.75,0.75,0.75);
+        octaMesh_12.scale.set(0.75,0.75,0.75);
+        octaMesh_13.scale.set(0.75,0.75,0.75);
+        
+
+        octaMesh_2.position.x = 4;
+        octaMesh_3.position.x = -4;
+        octaMesh_6.position.z = 6;
+        octaMesh_7.position.z = -6;
+        
+        octaMesh_4.position.z = 4;
+        octaMesh_5.position.z = -4;
+        octaMesh_8.position.x = 6;
+        octaMesh_9.position.x = -6;
+
+        pointLight_1.position.y = 1;
+        pointLight_1.position.z = 5;
+        octaMesh_10.position.x = 8;
+        octaMesh_11.position.x = -8;
+
+        pointLight_2.position.y = 1;
+        pointLight_2.position.z = -5;
+        octaMesh_12.position.z = 8;
+        octaMesh_13.position.z = -8;
+
+        pointLight_3.position.y = 1;
+        pointLight_3.position.x = 5;
+
+        pointLight_4.position.y = 1;
+        pointLight_4.position.z = -5;
+
+        camera.position.z = 10;
+        camera.position.y = 1;
+
+        let time = 0;
+        function render(){
+            time += 0.005;
+
+
+            octaMesh.rotation.y = time;
+            obj_1.rotation.y = time * -2;
+            obj_2.scale.y = Math.sin(time * 5) * 2;
+            [octaMesh_2, octaMesh_3, octaMesh_4, octaMesh_5].map((obj)=>{
+                obj.rotation.set(time * 1,time * 2,time * 3);
+            });
+
+            obj_1.children.map((item)=>{
+                item.rotation.x = time * 2;
+            });
+
+            [pointLight_1, pointLight_2, pointLight_3,pointLight_4].map((obj)=>{
+                //obj.color = new THREE.Color(Math.random() * 0xffffff);
+                obj.position.y = Math.sin(time * 50) * 4;
+            })
+
+            
+
+            renderer.render(scene, camera);
+
+            requestAnimationFrame(render);
+        }
+
+        render();
+        
+        
+
+    </script>
+    
+</body>
+</html>
