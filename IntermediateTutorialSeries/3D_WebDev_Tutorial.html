@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js - misc - octree collisions</title>
+		<meta charset=utf-8 />
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<style>
+
+			*{
+				box-sizing: border-box;
+			}
+
+			body{
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+			}
+
+			#tooltip {
+				width: auto;
+				height: 40px;
+				padding: 10px 15px;
+				border-radius: 10px;
+				background-color: rgba(0, 255, 34, 0.5);
+				color: white;
+				position: absolute;
+				visibility: hidden;
+				z-index: 10;
+			}
+
+			#blogElement{
+				position: absolute;
+				background-color: beige;
+				margin: auto;
+				padding: 20px 10px;
+				width: 50%;
+				height: 90%;
+				left: 0;
+				top: 0;
+				right: 0;
+				bottom: 0;
+				visibility: hidden;
+			}
+
+			#blogImgDiv{
+				width: 100%;
+				height: auto;
+				margin-top: 20px;
+				padding: 10px;
+				background-color: gray;
+			}
+
+			#blogImg{
+				width: 100%;
+				height: 50px;
+				border: 1px solid green;
+			}
+
+			#blogArticleDiv{
+				margin-top: 30px;
+				height: auto;
+				padding: 10px;
+				border: 1px solid rgb(58, 183, 255);
+			}
+
+			#closeElement{
+				width: 20px;
+				height: 20px;
+				background-color: red;
+				top: 1%;
+				right: 1%;
+				position: absolute;
+			}
+
+			#soundPlay{
+				width: 50px;
+				height: 20px;
+				margin: auto;
+				background-color: pink;
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: 50px;
+				bottom: 0;
+				visibility: hidden;
+			}
+		</style>
+	</head>
+	<body>
+		<audio loop id="aboutVoice" preload="auto" style="display: none">
+			<source src="resources/audio/About.ogg" type="audio/ogg">
+			<source src="resources/audio/About.mp3" type="audio/mpeg">
+		</audio>
+        <video id="video" crossOrigin="anonymous" playsinline style="display:none">
+            <source src="resources/videos/SHOWREEL.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
+		</video>
+
+		<div id="container"></div>
+		<div id="soundPlay"></div>
+		<div id="tooltip"></div>
+
+		<script src="../es_module_shims/es_module_shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "../three.js-master/build/three.module.js",
+					"three/addons/": "../three.js-master/examples/jsm/"
+				}
+			}
+		</script>
+		<script type="module">
+
+			import * as THREE from 'three';
+			import Stats from 'three/addons/libs/stats.module.js';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { Octree } from 'three/addons/math/Octree.js';
+			import { Capsule } from 'three/addons/math/Capsule.js';
+			import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+			import { UnrealBloomPass } from "../three.js-master/examples/jsm/postprocessing/UnrealBloomPass.js";
+			import { OutlinePass } from "../three.js-master/examples/jsm/postprocessing/OutlinePass.js";
+			import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+			import { ShaderPass } from "../three.js-master/examples/jsm/postprocessing/ShaderPass.js";
+			import { FXAAShader } from "../three.js-master/examples/jsm/shaders/FXAAShader.js";
+			import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+
+            let aboutPlatformPos;
+			let colliderPos;
+			let distanceBetweenPlayerAndCollider;
+			let raycaster;
+			let INTERSECTED;
+			let hologramGrp = [];
+			let activeHologram = null;
+			let bookInteractable = false;
+			let voiceAudio;
+			let audioSourceDefined = false;
+			let aboutPlaying = false;
+			let hologramButtons = [];
+			let interactables = [];
+			let statueButton;
+			let mixer, animation, galleryHologram, galleryProjectionSphere, showreelPos;
+
+			const clock = new THREE.Clock();
+
+			const scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0x88ccee );
+			
+			const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			camera.rotation.order = 'YXZ';
+			scene.add(camera);
+						
+			const container = document.getElementById( 'container' );
+			container.appendChild(tooltip);
+
+			const renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.outputEncoding = THREE.sRGBEncoding;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.physicallyCorrectLights = true;
+			container.appendChild( renderer.domElement );
+
+            const renderTarget = new THREE.WebGLRenderTarget( window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio, {
+				minFilter: THREE.LinearFilter,
+				magFilter: THREE.LinearFilter,
+				format: THREE.RGBAFormat,
+				encoding: THREE.sRGBEncoding,
+			} );
+
+            const fillLight1 = new THREE.HemisphereLight( 0x999977, 0x442200, 2);
+			fillLight1.position.set( 2, 1, 1 );
+			scene.add( fillLight1 );
+
+            const blogElement = document.createElement("div");
+			blogElement.id = "blogElement";
+			
+			const blogTitle = document.createElement("h1");
+			blogTitle.textContent = "THIS BLOG IS TITLED?!"
+			blogElement.appendChild(blogTitle);
+
+			const closeElement = document.createElement("div");
+			closeElement.id = "closeElement";
+			blogElement.appendChild(closeElement);
+
+			const blogImgDiv = document.createElement("div");
+			blogImgDiv.id = "blogImgDiv";
+			
+			const blogImg = document.createElement("img");
+			blogImg.id = "blogImg";
+
+			blogImgDiv.appendChild(blogImg);
+			blogElement.appendChild(blogImgDiv);
+
+			const blogArticleDiv = document.createElement("div");
+			blogArticleDiv.id = "blogArticleDiv";
+			blogArticleDiv.textContent = "Hello Blogger";
+			blogElement.appendChild(blogArticleDiv);
+			
+			container.appendChild(blogElement);
+
+            closeElement.onclick = (e)=>{
+				e.preventDefault();
+				blogElement.style.visibility = "hidden";
+				bookInteractable = !bookInteractable;
+			}
+
+            const renderPass = new RenderPass(scene, camera);
+        	const composer = new EffectComposer(renderer);
+			const outlineComposer = new EffectComposer(renderer, renderTarget);
+			const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.2, 0.1 );
+
+			const outline = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), scene, camera);
+			outline.edgeThickness = 1.0;
+			outline.edgeStrength = 3.0;
+			outline.visibleEdgeColor.set(0xffffff);
+
+            const textureLoader = new THREE.TextureLoader();
+			textureLoader.load("../three.js-master/examples/textures/tri_pattern.jpg", function(texture){
+				if (texture) {
+					outline.patternTexture = texture;
+					texture.wrapS = THREE.RepeatWrapping;
+					texture.wrapT = THREE.RepeatWrapping;
+				}	
+			});
+
+            const fxaaShader = new ShaderPass(FXAAShader);
+			fxaaShader.uniforms["resolution"].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+
+            const stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0px';
+			container.appendChild( stats.domElement );
+
+            //Create a video grid
+            const meshes = [],
+            materials = [];
+
+            const group = new THREE.Group();
+
+            const xgrid = 20;
+            const ygrid = 10;
+
+			let i, j, ox, oy, geometry, material, mesh;
+
+			const ux = 1 / xgrid;
+			const uy = 1 / ygrid;
+
+			const xsize = 1920 / xgrid;
+			const ysize = 1080 / ygrid;
+
+            let video = document.getElementById("video");
+        
+            const videoTexture = new THREE.VideoTexture(video);
+
+			const parameters = { map: videoTexture };
+
+            scene.add(group);
+
+			let cube_count = 0;
+
+            let cubesAnimate = false;
+
+			for ( i = 0; i < xgrid; i ++ ) {
+
+				for ( j = 0; j < ygrid; j ++ ) {
+
+					ox = i;
+					oy = j;
+
+					geometry = new THREE.BoxGeometry( xsize, ysize, xsize );
+
+					change_uvs( geometry, ux, uy, ox, oy );
+
+					materials[ cube_count ] = new THREE.MeshLambertMaterial( parameters );
+
+					material = materials[ cube_count ];
+					
+					material.color.setHSL( material.hue, 0.2	, 1.0 );
+
+					mesh = new THREE.Mesh( geometry, material );
+
+					mesh.position.x = ( i - xgrid / 2 ) * xsize;
+					mesh.position.y = ( j - ygrid / 2 ) * ysize;
+					mesh.position.z = 0;
+					
+					group.add( mesh );
+
+					mesh.dx = 0.001 * ( 0.5 - Math.random() );
+					mesh.dy = 0.001 * ( 0.5 - Math.random() );
+
+					meshes[ cube_count ] = mesh;
+
+					cube_count += 1;
+
+				} 
+
+			}
+
+            group.scale.set(0.0015, 0.0015, 0.0015);
+            
+			function change_uvs( geometry, unitx, unity, offsetx, offsety ) {
+
+				const uvs = geometry.attributes.uv.array;
+
+				for ( let i = 0; i < uvs.length; i += 2 ) {
+
+					uvs[ i ] = ( uvs[ i ] + offsetx ) * unitx;
+					uvs[ i + 1 ] = ( uvs[ i + 1 ] + offsety ) * unity;
+				}
+			}
+
+            composer.addPass(renderPass);
+			composer.addPass(bloomPass);
+
+			outlineComposer.addPass(renderPass);
+			outlineComposer.addPass(outline);
+			outlineComposer.addPass(fxaaShader);
+			outlineComposer.addPass(bloomPass);
+            
+			const GRAVITY = 30;
+
+            const STEPS_PER_FRAME = 5;
+
+            let intersect;
+        
+            const spheres = [];
+
+            const worldOctree = new Octree();
+
+            const playerCollider = new Capsule( new THREE.Vector3( -2, 0.35, 14 ), new THREE.Vector3( -2, 2.0, 14 ), 0.35 );
+			const playerVelocity = new THREE.Vector3();
+			const playerDirection = new THREE.Vector3();
+
+			let playerOnFloor = false;
+			let mouseTime = 0;
+
+			const keyStates = {};
+
+			const vector1 = new THREE.Vector3();
+			const vector2 = new THREE.Vector3();
+			const vector3 = new THREE.Vector3();
+
+            document.addEventListener( 'keydown', ( event ) => {
+
+                keyStates[ event.code ] = true;
+
+                colliderPos = new THREE.Vector3(playerCollider.start.x, playerCollider.start.y, playerCollider.start.z);
+                if (aboutPlatformPos) {
+                    distanceBetweenPlayerAndCollider = colliderPos.distanceTo(aboutPlatformPos);
+                }
+
+            } );
+
+            document.addEventListener( 'keyup', ( event ) => {
+
+                keyStates[ event.code ] = false;
+
+            } );
+
+            renderer.domElement.addEventListener( 'mousedown', () => {
+
+                if (!bookInteractable) {
+                    document.body.requestPointerLock();
+            }
+
+            mouseTime = performance.now();
+                console.log("here");
+
+            } );
+
+            document.addEventListener( 'mouseup', () => {
+
+                parented = false;
+
+            } );
+
+            document.body.addEventListener( 'mousemove', ( event ) => {
+            if ( document.pointerLockElement === document.body ) {
+                camera.rotation.y -= event.movementX / 500;
+                camera.rotation.x -= event.movementY / 500;
+                intersection();	
+            }
+            } );
+
+
+            window.addEventListener( 'resize', onWindowResize );
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				outlineComposer.setSize(window.innerWidth, window.innerHeight);
+				fxaaShader.uniforms["resolution"].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+
+			}
+
+
+			window.addEventListener("click", (e)=>{
+				
+				if (INTERSECTED && INTERSECTED.name.search("button_interactable") !== -1 && !aboutPlaying) {
+
+					const listener = new THREE.AudioListener();
+					camera.add(listener);
+					const aboutVoice = new THREE.PositionalAudio(listener);
+					voiceAudio = document.getElementById("aboutVoice");
+					if (!audioSourceDefined) {
+						aboutVoice.setMediaElementSource(voiceAudio);
+						aboutVoice.setRefDistance(10);
+						audioSourceDefined = true;
+					}
+					
+					voiceAudio.play();
+					galleryProjectionSphere.add(aboutVoice);
+					aboutPlaying = !aboutPlaying;
+				
+				}
+
+				else if (aboutPlaying) {
+					voiceAudio.pause();
+					aboutPlaying = !aboutPlaying;
+				}
+				
+                cubesAnimate = !cubesAnimate;
+				if (cubesAnimate && INTERSECTED && INTERSECTED.name === "projectCard_interactable") {
+					video.play();
+				}
+				if (!cubesAnimate && INTERSECTED && INTERSECTED.name === "projectCard_interactable") {
+					video.pause();
+				}
+
+			})
+
+            const selectedObjects = [];
+
+			function addSelectedObjects(object){
+
+				if (selectedObjects.length > 0) {
+					selectedObjects.pop();
+				}
+
+				selectedObjects.push(object);
+			}
+
+			function intersection(){
+				
+				raycaster = new THREE.Raycaster(camera.position,camera.getWorldDirection(playerDirection), 0.1, 10);
+				if (interactables.length > 0) {
+					const intersects = raycaster.intersectObjects(interactables,false);
+					
+					if ( intersects.length > 0 ) {
+						
+						if ( INTERSECTED != intersects[0].object && intersects[0].object.type === "Mesh" ) {
+
+							INTERSECTED = intersects[0].object;
+							intersect = intersects[0];
+							addSelectedObjects(INTERSECTED);
+							outline.selectedObjects = selectedObjects;
+							
+							tooltip.style.left = window.innerWidth / 2 + "px";
+							tooltip.style.top = window.innerHeight / 2 + "px";
+
+							if (INTERSECTED.name.search("interactable") !== -1) {
+								tooltip.style.visibility = "visible";
+								tooltip.textContent = INTERSECTED.name;
+							}
+
+							if (INTERSECTED.name === "book_interactable" || INTERSECTED.name === "book2_interactable") {
+
+								bookInteractable = true;
+								document.exitPointerLock();
+								blogElement.style.visibility = "visible";
+																
+							}
+
+							hologramInteraction(INTERSECTED);
+							
+						}
+
+					} else {
+
+						INTERSECTED = null;
+
+					}
+				}
+				
+			}
+
+
+            function controls( deltaTime ) {
+
+                const speedDelta = deltaTime * ( playerOnFloor ? 25 : 8 );
+
+                if ( keyStates[ 'KeyW' ] ) {
+                    playerVelocity.add( getForwardVector().multiplyScalar( speedDelta ) );
+
+                }
+
+                if ( keyStates[ 'KeyS' ] ) {
+                    playerVelocity.add( getForwardVector().multiplyScalar( - speedDelta ) );
+                    
+                }
+
+                if ( keyStates[ 'KeyA' ] ) {
+
+                    playerVelocity.add( getSideVector().multiplyScalar( - speedDelta ) );
+                    
+                }
+
+                if ( keyStates[ 'KeyD' ] ) {
+
+                    playerVelocity.add( getSideVector().multiplyScalar( speedDelta ) );
+                    
+                }
+
+                if ( playerOnFloor ) {
+
+                    if ( keyStates[ 'Space' ] ) {
+
+                        playerVelocity.y = 15;
+
+                    }
+
+                }
+
+            }
+
+            // This is the lightmap texture
+			const texture = new THREE.TextureLoader().load("../resources/images/lightmap_lite.jpg");
+
+            const loader = new GLTFLoader();
+
+            loader.load( '../resources/scenes/tutorial_scene.gltf', ( gltf ) => {
+
+                console.log("scene:", gltf.scene);
+
+                gltf.scene.children.map((obj)=>{
+
+                    if (obj.name.search("pathway_markers") > -1) {
+                        obj.material.setValues({emissive: 0x26E7B1, metalness: 0})
+                    }
+
+                    if (obj.name.search("area") > -1) {
+                        let newLight = new THREE.RectAreaLight();
+                        newLight.position.set(obj.position.x, obj.position.y, obj.position.z);
+                        newLight.rotation.set(obj.rotation.x, obj.rotation.y, obj.rotation.z);
+                        newLight.height = 4;
+                        newLight.width = 12;
+                        newLight.intensity = 0.2;
+                        scene.add(newLight);
+                            
+                    }
+
+                    if (obj.name === "posHolder") {
+                            showreelPos = obj;
+                            group.position.set(showreelPos.position.x, showreelPos.position.y, showreelPos.position.z);
+                            
+                        }
+
+                    if (obj.type === "SpotLight") {
+                        obj.intensity = 10;
+                    }
+
+                    if (obj.isMesh) {
+                        if (texture && obj.name !== "statue") {
+                            texture.flipY = false;
+                            obj.material.lightMap = texture;
+
+                        }
+                        if (obj.name.search("button") > -1 ) {
+                            obj.userData.hologramIsActive = false;
+                            hologramButtons.push(obj);
+                            console.log("buttons:", hologramButtons);
+                        }
+
+                        if (obj.name === "galleryProjectionSphere") {
+                            obj.material.setValues({wireframe: true});
+                            obj.visible = false;
+                            galleryProjectionSphere = obj;
+                            
+                        }
+
+                        if (obj.name.search("gallery_art_panels") > -1) {
+                            obj.visible = false;
+                        }
+
+                        if (obj.name.search("hologram") > -1) {
+
+                            obj.visible = false;
+                            hologramGrp.push(obj);
+                            
+                        }
+
+                        if (obj.name == "aboutPlatform") {
+                            aboutPlatformPos = new THREE.Vector3(obj.position.x, obj.position.y, obj.position.z );
+                        }
+                        
+                        if (obj.name.search("interactable") > -1) {
+                            interactables.push(obj);
+                            
+                        }
+
+                        if (obj.name === "statue") {
+                            
+                            const color = obj.material.color.getHex();
+                            obj.material.dispose();
+                            obj.material = new THREE.MeshBasicMaterial();
+                            obj.material.color.setHex(color);
+                        }
+                        
+                    }
+                    
+                    
+                })
+
+                scene.add( gltf.scene );
+
+                worldOctree.fromGraphNode( gltf.scene );
+
+                animate();
+
+            } );
+
+            //Manage the position of player making sure that player is alwys on surface of the floor and on top
+			function playerCollisions() {
+
+            const result = worldOctree.capsuleIntersect( playerCollider );
+
+            playerOnFloor = false;
+
+            if ( result ) {
+
+                playerOnFloor = result.normal.y > 0;
+
+                if ( ! playerOnFloor ) {
+
+                    playerVelocity.addScaledVector( result.normal, - result.normal.dot( playerVelocity ) );
+
+                }
+
+                playerCollider.translate( result.normal.multiplyScalar( result.depth ) );
+
+            }
+
+            }
+
+            function updatePlayer( deltaTime ) {
+
+                let damping = Math.exp( - 4 * deltaTime ) - 1;
+
+                if ( ! playerOnFloor ) {
+
+                    playerVelocity.y -= GRAVITY * deltaTime;
+
+                    damping *= 0.1;
+
+                }
+
+                playerVelocity.addScaledVector( playerVelocity, damping );
+
+                const deltaPosition = playerVelocity.clone().multiplyScalar( deltaTime );
+                playerCollider.translate( deltaPosition );
+
+                playerCollisions();
+
+                camera.position.copy( playerCollider.end );
+
+            }
+
+            // To use the direction that the camera is facing to determine the forward direction of the player
+
+            function getForwardVector() {
+
+                camera.getWorldDirection( playerDirection);
+                playerDirection.y = 0;
+                playerDirection.normalize();
+
+                return playerDirection;
+
+            }
+
+            // To use the direction that the camera is facing to determine the side direction of the player
+
+            function getSideVector() {
+
+                camera.getWorldDirection( playerDirection);
+                playerDirection.y = 0;
+                playerDirection.normalize();
+                playerDirection.cross( camera.up );
+
+                return playerDirection;
+            }
+
+            //Put player back on the floor surface if y position is lower than 25
+			function teleportPlayerIfOob() {
+
+                if ( camera.position.y <= - 25 ) {
+
+                    playerCollider.start.set( -2, 0.35, 14 );
+                    playerCollider.end.set( -2, 2, 14 );
+                    playerCollider.radius = 0.35;
+                    camera.position.copy( playerCollider.end );
+                    camera.rotation.set( 0, 0, 0 );
+                }
+
+            }
+
+            // This checks which hologram is active/selected and then displays it the hologram interaction
+
+			function hologramInteraction(obj){
+				let objName = /^\w+/.exec(obj.name.replace(/_/g," "))[0];
+				
+				hologramGrp.map((item)=>{
+					if (objName === /^\w+/.exec(item.name.replace(/_/g," "))[0] ) {
+						if (activeHologram !== null) {
+							activeHologram.visible = false;
+							activeHologram = item;
+							activeHologram.visible = true;
+						}
+						else{
+							activeHologram = item;
+							activeHologram.visible = true;
+						}
+						
+						galleryProjectionSphere.visible = true;
+						document.exitPointerLock();
+					}
+				})
+			}
+            
+			function animate() {			
+				const deltaTime = Math.min( 0.05, clock.getDelta() ) / STEPS_PER_FRAME;		
+					
+				for ( let i = 0; i < STEPS_PER_FRAME; i ++ ) {
+
+					controls( deltaTime );
+
+					updatePlayer( deltaTime );
+					
+					teleportPlayerIfOob();
+
+				}
+
+                if (group.children.length > 0) {
+                    group.children.map((obj)=>{
+                        obj.lookAt(camera.position);
+                    })
+
+                    group.lookAt(camera.position);
+                }
+
+				if (galleryProjectionSphere) {
+					
+					galleryProjectionSphere.rotation.y += 0.01;
+				}
+				
+				renderer.render(scene, camera);
+								
+				if (distanceBetweenPlayerAndCollider) {
+					distanceBetweenPlayerAndCollider < 30 ? outlineComposer.render(): renderer.render(scene, camera);
+					distanceBetweenPlayerAndCollider < 30 ? fillLight1.intensity = 0: fillLight1.intensity = 2;
+				}
+				
+				if (activeHologram !== null) {
+					activeHologram.lookAt(camera.position);
+				}
+				
+				stats.update();
+
+				requestAnimationFrame( animate );
+			}
+
+		</script>
+	</body>
+</html>
