@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE  from "../three.js-master/build/three.module.js";
+        import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import { UnrealBloomPass } from "../three.js-master/examples/jsm/postprocessing/UnrealBloomPass.js";
+        import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+        import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1.0, 1000);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        const ambientLight = new THREE.AmbientLight();
+        ambientLight.intensity = 0.3;
+
+        scene.add(ambientLight);
+
+        const renderPass = new RenderPass(scene, camera);
+        const composer = new EffectComposer(renderer);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.4, 0.2, 0.1 );
+
+        const geo = new THREE.BoxGeometry();
+        const mat = new THREE.MeshStandardMaterial({color: "blue", emissive:0xaa0000, wireframe: true});
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+
+        const normalIndices = [];
+        const normals = mesh.geometry.attributes.normal;
+        console.log("before rotate normals:",normals.array);
+
+        for (let i = 0; i < normals.array.length; i+= 3) {
+
+            const normX = normals.array[i];
+            const normY = normals.array[i + 1];
+            const normZ = normals.array[i + 2];
+
+            normalIndices.push(new THREE.Vector3(normX, normY, normZ));
+        }
+
+        const lineMat = new THREE.LineBasicMaterial({color: 0x00ff00});
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([mesh.position, normalIndices[16]]);
+        const lineMesh = new THREE.Line(lineGeo, lineMat);
+
+        const box = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({color: 0xad90ff, wireframe: false}));
+        //scene.add(box);
+
+        box.position.z = 0;
+        box.position.x = 5;
+
+
+        let time = 0;
+        let speed = 100;
+        let sphereSpawnPos;
+
+        function normalUpdate(time, speed){
+
+            //mesh.updateMatrixWorld(true);
+            const normalIndices = [];
+
+            if (lineMesh.geometry) {
+                //console.log("here");
+                const normals = mesh.geometry.attributes.normal
+
+                for (let i = 0; i < normals.array.length; i+= 3) {
+
+                    const normX = normals.array[i];
+                    const normY = normals.array[i + 1];
+                    const normZ = normals.array[i + 2];
+
+                    normalIndices.push(new THREE.Vector3(normX, normY, normZ).applyMatrix3(new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld)).multiplyScalar(1)); 
+                }
+
+                sphereSpawnPos = normalIndices[16];
+
+                lineMesh.geometry.setFromPoints([mesh.position, normalIndices[16]]);
+
+            
+            }
+
+        }
+
+        let pos;
+        let quat;
+        let bullet;
+        
+        let fire = false;
+
+        window.onclick = (e)=>{
+            e.preventDefault();
+            pos = mesh.getWorldDirection(new THREE.Vector3());
+            //quat = mesh.getWorldQuaternion(new THREE.Quaternion());
+            console.log("click");
+        }
+
+        window.onmousedown = (e)=>{
+            e.preventDefault();
+            bullet = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff})); 
+            scene.add(bullet);
+            fire = true;
+            console.log("fire", fire);
+        }
+
+        window.onmouseup = (e)=>{
+            e.preventDefault();
+           fire = false;
+           console.log("fire", fire);
+        }
+
+        function onWindowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener("resize", onWindowResize);
+
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+
+        lineMesh.matrixAutoUpdate = false;
+        scene.add(lineMesh);
+         
+        camera.lookAt(scene.position);
+        camera.position.y = 5;
+        camera.position.z = 10;
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.update();
+        
+        function render(){ 
+
+            requestAnimationFrame(render); 
+            
+            //mesh.rotation.y += 0.01;
+
+            quat = mesh.getWorldQuaternion(new THREE.Quaternion());
+            box.setRotationFromQuaternion(quat);
+
+            normalUpdate(time, speed);
+
+            if (pos) {
+               
+               if (bullet) {
+                   if (fire) {
+                   console.log("fire shot");
+                   time = 0;
+               }
+                   bullet.position.set(pos.x, pos.y, pos.z).multiplyScalar(time * speed);
+                   time += 0.01;
+               }
+               
+           }
+            
+            
+            composer.render();
+            
+        }
+
+        render();
+
+    </script>
+</body>
+</html>
