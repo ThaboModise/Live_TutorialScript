@@ -112,6 +112,7 @@
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             intersection();
+            composer.render();
         }
 
         //Create point-lights
@@ -424,7 +425,7 @@
 
             loader.load( '../logo/superhero.obj', function ( obj ) {
 
-            object = obj;
+            //object = obj;
 
         }, onProgress, onError );
 
@@ -737,8 +738,7 @@
 
         const orbit = new OrbitControls(camera, renderer.domElement);
         orbit.update();
-        orbit.addEventListener("change", render);
-
+        
         // Render everything in the scene
         function render(){
             renderer.autoClear = false;
@@ -747,7 +747,7 @@
             
             //renderer.render(scene, camera);
             composer.render();
-            requestAnimationFrame(render);
+            //requestAnimationFrame(render);
             
         }
 

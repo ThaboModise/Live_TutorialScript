@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE  from "../three.js-master/build/three.module.js";
+		import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import { UnrealBloomPass } from "../three.js-master/examples/jsm/postprocessing/UnrealBloomPass.js";
+        import { RenderPass } from "../three.js-master/examples/jsm/postprocessing/RenderPass.js";
+        import { ShaderPass } from "../three.js-master/examples/jsm/postprocessing/ShaderPass.js";
+        import { EffectComposer } from "../three.js-master/examples/jsm/postprocessing/EffectComposer.js";
+        import { PointerLockControls } from "../three.js-master/examples/jsm/controls/PointerLockControls.js";
+
+        const renderer = new THREE.WebGLRenderer({canvas:canvas, antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        
+        const camera = new THREE.PerspectiveCamera(70,parseInt(window.getComputedStyle(canvas).getPropertyValue("width"))/ parseInt(window.getComputedStyle(canvas).getPropertyValue("height")),0.1,1000);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000); 
+
+        const controls = new PointerLockControls( camera, document.body );
+
+        const pointLight_1 = new THREE.PointLight(0xaa3300);
+        pointLight_1.intensity = 2.0;
+        pointLight_1.distance = 16.5;
+        pointLight_1.castShadow = true;
+        pointLight_1.shadow.bias = - 0.005;
+        pointLight_1.shadow.mapSize.width = 1024; 
+        pointLight_1.shadow.mapSize.height = 1024; 
+        pointLight_1.shadow.camera.near = 0.1;
+        pointLight_1.shadow.camera.far = 1000;
+
+        const light2 = new THREE.PointLight(0xaa3300);
+        light2.intensity = 0.8;
+
+        const renderPass = new RenderPass(scene, camera);
+
+        const composer = new EffectComposer(renderer);
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.0, 0.6, 0.1 );
+
+        const curve = new THREE.CatmullRomCurve3( [
+            new THREE.Vector3( -50.5, 0.3, 50.5 ),
+            new THREE.Vector3( 50.5, 0.8, 50.5 ),
+            new THREE.Vector3( 50.5, 0.3, -50.5 ),
+            new THREE.Vector3( -50.5, 0.8, -50.5 ),
+        ] );
+
+        curve.curveType = "centripetal";
+        curve.closed = true;
+
+        const tubeGeo = new THREE.TubeGeometry(curve, 100, 10, 10, true);
+        const tubeMaterial = new THREE.MeshStandardMaterial({color:0x660022, wireframe: false, side: THREE.DoubleSide, transparent: false, opacity: 1});
+        const pointMat = new THREE.PointsMaterial({color:0xaa3300, size:0.5})
+        const wireframeMat = new THREE.MeshStandardMaterial({color: 0x0000ff, emissive:0x550044,wireframe: true, opacity: 1, transparent: false});
+        const wireframeMesh = new THREE.Mesh(tubeGeo, wireframeMat);
+        const tubeMesh = new THREE.Mesh(tubeGeo, tubeMaterial);
+        const tubeMesh2 = new THREE.Points(tubeGeo, pointMat);
+        tubeMesh.receiveShadow = true;
+        tubeMesh2.receiveShadow = true;
+
+        const map = new THREE.TextureLoader().load("../resources/images/alphaTest.jpg");
+
+        const sphereGeo = new THREE.SphereGeometry();
+
+        let sphereMat;
+        let sphereMesh;
+
+        if (map) {
+            sphereMat = new THREE.MeshStandardMaterial({color: 0xffff00,emissive: 0x110000, alphaMap: map, alphaTest: 0.7, side: THREE.DoubleSide });  
+            sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+            sphereMesh.castShadow = true;
+            scene.add(sphereMesh);
+        } 
+
+        tubeMesh.add(wireframeMesh);
+
+        const clock = new THREE.Clock();
+
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+
+        scene.add(light2);
+      
+        scene.add(tubeMesh, tubeMesh2);
+
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        orbit.update();
+        orbit.addEventListener("change", render);
+    
+        function onWindowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener("resize", onWindowResize);
+
+        let tyme = 0;
+
+        function render(){
+
+            tyme += 0.01;
+            
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const time = clock.getElapsedTime();
+            const  looptime = 50;
+            const t = (time % looptime)/ looptime;
+            const  t2 = ((time + 1) % looptime) / looptime;
+            const  t3 = ((time + 0.7) % looptime) / looptime;
+            const  pos = tubeMesh.geometry.parameters.path.getPointAt(t);
+            const  pos2 = tubeMesh.geometry.parameters.path.getPointAt(t2);
+            const  pos3 = tubeMesh.geometry.parameters.path.getPointAt(t3);
+
+            light2.position.copy(pos3);
+            
+            camera.lookAt(pos);
+            controls.getObject().position.copy(pos);
+
+            if (sphereMesh !== undefined) {
+                sphereMesh.position.copy(pos2);
+                sphereMesh.rotation.x += 0.01;
+                sphereMesh.rotation.z += 0.01;
+                sphereMesh.add(pointLight_1);
+                sphereMesh.material.alphaTest = Math.abs(Math.sin(tyme) * 0.04 ) + 0.7;
+                
+             }
+       
+            //renderer.render(scene, camera);
+            composer.render();
+
+        }
+
+        function animate(){
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+        
+    </script>
+    
+</body>
+</html>
