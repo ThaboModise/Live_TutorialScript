@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script src="PerlinNoise.js"></script>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "../three.js-master/build/three.module.js",
+					"three/addons/": "../three.js-master/examples/jsm/",
+                    "three/nodes": "../three.js-master/examples/jsm/nodes/Nodes.js"
+				}
+			}
+    </script>
+    
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE from "../three.js-master/build/three.module.js";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+        import { Reflector } from "three/addons/objects/Reflector.js";
+        import FakeGlowMaterial from "../resources/materials/FakeGlowMaterial.js";
+        import { LightningStrike } from 'three/addons/geometries/LightningStrike.js';
+        
+        const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.y = 15;
+        camera.position.z = 50;
+        camera.lookAt(scene.position);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        //Create a transparent plane which will serve as a filter for the refletive surface
+        const circleGeometry = new THREE.CircleGeometry(100, 32);
+        const topFloor = new THREE.Mesh(circleGeometry, new THREE.MeshStandardMaterial({color: 0xaaaaaa, roughness: 1, metalness: 0, opacity: 0.8, transparent: true}))
+        scene.add(topFloor);
+        topFloor.position.y = 0.005;
+        topFloor.rotateX( - Math.PI / 2 );
+
+        //Create a reflective plane surface
+        const floor = new Reflector(circleGeometry,
+            {
+                clipBias: 0.003,
+                textureWidth: window.innerWidth * window.devicePixelRatio,
+                textureHeight: window.innerHeight * window.devicePixelRatio,
+                color: 0x555555
+            } 
+        )
+
+        floor.rotateX( - Math.PI / 2 );
+
+        scene.add(floor);
+
+        const light = new THREE.PointLight(0xf27f04);
+        light.intensity = 150;
+        light.distance = 200.5;
+
+        const light2 = light.clone();
+
+        light.position.y = 3.75;
+        light.position.z = 2;
+
+        light2.position.y = 3.75;
+        light2.position.z = -3;
+ 
+        scene.add(light, light2);
+        
+        //Creating circle with points
+        let pts = [];
+        let POINT_COUNT = 3000;
+        let mainR = 20;
+        let outerLimit = 1;
+        let innerLimit = 20;
+
+        for(let i = 0; i < POINT_COUNT; i++){
+
+            let inout = (Math.random() - 0.35) * 2;
+            let lim = (inout >= 0 ? outerLimit : innerLimit);
+            let rand = mainR + Math.pow(Math.random(), 0.2) * lim * inout;
+
+            pts.push(
+                new THREE.Vector3().setFromCylindricalCoords(
+                    rand,
+                    Math.PI * 2 * Math.random(),
+                    Math.random() * 0.7
+                )
+            )
+        }
+        
+        let pointsGeo = new THREE.BufferGeometry().setFromPoints(pts);
+        let pointsMat = new THREE.PointsMaterial({size: 0.05, color: 0xc27f04});
+        let pointsMesh = new THREE.Points(pointsGeo, pointsMat);
+
+        scene.add(pointsMesh);
+
+        //Creating sphere dome with points
+        pts = [];
+        let phi, theta;
+
+        for(let i = 0; i < POINT_COUNT; i++){
+
+            phi = Math.acos(  -1 + ( 2 * i ) / POINT_COUNT );
+            theta = Math.sqrt( POINT_COUNT * Math.PI ) * phi;
+            
+            let inout = (Math.random() - 0.5) * 2;
+            let lim = (inout >= 0 ? outerLimit : innerLimit);
+            let rand = mainR + Math.pow(Math.random(), 0.2) * lim * inout;
+
+            pts.push(
+                new THREE.Vector3().setFromSphericalCoords(
+                    mainR,
+                    (phi / 2 )* Math.random(),
+                    theta * Math.random()
+                )
+            )
+        }
+
+        
+        let pointsGeo2 = new THREE.BufferGeometry().setFromPoints(pts);
+        let pointsMat2 = new THREE.PointsMaterial({size: 0.1, color: 0xc55d21});
+        let pointsMesh2 = new THREE.Points(pointsGeo2, pointsMat2);
+        scene.add(pointsMesh2);
+
+        //Creating blue sphere with points
+        pts = [];
+
+        for(let i = 0; i < POINT_COUNT; i++){
+
+            phi = Math.acos(  -1 + ( 2 * i ) / POINT_COUNT );
+            theta = Math.sqrt( POINT_COUNT * Math.PI ) * phi;
+            
+            let inout = (Math.random() - 0.5) * 2;
+            let lim = (inout >= 0 ? outerLimit : innerLimit);
+            let rand = mainR + Math.pow(Math.random(), 0.2) * lim * inout;
+            
+            pts.push(
+                new THREE.Vector3().setFromSphericalCoords(
+                    4,
+                    phi * Math.random() * 2,
+                    theta * Math.random() * 2
+                )
+            )
+        }
+
+        let pointsGeo3 = new THREE.BufferGeometry().setFromPoints(pts);
+        let pointsMat3 = new THREE.PointsMaterial({size: 0.025, color: 0x2e2eff});
+        let pointsMesh3 = new THREE.Points(pointsGeo3, pointsMat3);
+        scene.add(pointsMesh3);
+
+        pointsMesh3.position.set(0, 3.5, -0.2 );
+        pointsMesh3.scale.y = 0.9;
+
+        const p3Array = pointsMesh3.geometry.attributes.position.array;
+
+        //Creating orbs
+    
+        const orb = new THREE.Mesh(new THREE.SphereGeometry(4, 96, 64), new FakeGlowMaterial({glowColor: 0x1f0e05, glowInternalRadius: -2.58, opacity: 0.1}));
+        const orb2 = new THREE.Mesh(new THREE.SphereGeometry(6), new FakeGlowMaterial({glowColor: 0xeb2ae1 /*0xb55521*/, glowInternalRadius: 5.26, opacity: 0.2, fallof:0}));
+        scene.add(orb, orb2);
+
+        orb.position.set(0, 3.5, -0.2 );
+        orb2.position.set(0, 3.8, -0.2 );
+        orb.scale.y = 0.9;
+        orb2.scale.y = 0.8;
+
+        const orbPosArray = orb.geometry.attributes.position.array;
+
+        const orbVertexIndices = [];
+
+        //  Create half a sphere for mapping lightning strike positions
+        
+        const sphereHalf = new THREE.SphereGeometry(20, 32, 16, 0, Math.PI * 2, 0, Math.PI  * 0.5);
+
+        const sphereHalfPosArray = sphereHalf.attributes.position.array;
+        const sphereHalfIndices = [];
+
+        for (let i = 0; i < sphereHalfPosArray.length; i += 3) {
+            const indices = new THREE.Vector3();
+
+            indices.x = sphereHalfPosArray[i + 0];
+            indices.y = sphereHalfPosArray[i + 1];
+            indices.z = sphereHalfPosArray[i + 2];
+
+            sphereHalfIndices.push(indices);
+            
+        }
+
+        //Creating lightning params
+
+        const params = {};
+
+        for (let i = 0; i < 20; i++) {
+            params["rayParams" + i] ={
+                sourceOffset: new THREE.Vector3(),
+                destOffset: new THREE.Vector3(),
+                radius0: 0.02,
+                radius1: 0.02,
+                minRadius: 0.5,
+                maxIterations: 7,
+                isEternal: true,
+
+                timeScale: 0.7,
+
+                propagationTimeFactor: 0.05,
+                vanishingTimeFactor: 0.95,
+                subrayPeriod: 2.5,
+                subrayDutyCycle: 0.3,
+                maxSubrayRecursion: 3,
+                ramification: 7,
+                recursionProbability: 0.6,
+
+                roughness: 0.85,
+                straightness: 0.68
+            }  
+        }
+
+        const lightningPosArray = [];
+        let indicesIndex = 0;
+        
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(3));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(3));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(3));
+        lightningPosArray.push(sphereHalfIndices[92]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(3));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(3));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(3.4));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(3.6));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(4.4));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(4.6));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(6.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(6.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(6.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(6.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(6.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(6.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(6.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(8.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(8.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(9.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]); indicesIndex += 28;
+        lightningPosArray.push(new THREE.Vector3().copy(sphereHalfIndices[indicesIndex]).divideScalar(9.0));
+        lightningPosArray.push(sphereHalfIndices[indicesIndex]);
+
+        //Creating lightning
+        const lightning = [];
+        const lightningMesh = [];
+        const rayMaterial = new THREE.MeshBasicMaterial({color: 0xd45eff, transparent: true, opacity: 0.8, emissive: 0xd45eff });
+
+
+        function createLightning(){
+
+            for (let i = 0; i < 20; i++) {
+                lightning.push(new LightningStrike( params["rayParams" + i] ));
+                lightningMesh.push(new THREE.Mesh( lightning[i], rayMaterial )); 
+                scene.add(lightningMesh[i]); 
+            }
+        }
+
+        createLightning();
+
+        //Adding spheres to the tip of the lightning strikes
+
+        let meshIndex = 0;
+
+        const mesh  = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({opacity: 0.5,color: 0x9ffaff, transparent : true}), lightningMesh.length);
+
+        for (let i = 1; i < lightningPosArray.length; i += 2) {
+
+            const position = new THREE.Vector3(lightningPosArray[i].x , lightningPosArray[i].y, lightningPosArray[i].z);
+
+            const scale = new THREE.Vector3(1, 1, 1);
+            const quat = new THREE.Quaternion();
+
+            const matrix = new THREE.Matrix4();
+            matrix.compose(position, quat, scale);
+
+            mesh.setMatrixAt(meshIndex,matrix);
+            meshIndex++;
+        }
+
+        scene.add(mesh);
+
+        let clock = new THREE.Clock();
+
+        function render(){ 
+
+            const elapsedTime = clock.getElapsedTime();
+
+            let k = 5;
+            
+            // Animating orb
+            for (let i = 0; i < orbPosArray.length; i+=3) {
+
+                const verts = new THREE.Vector3();
+
+                verts.x = (orbPosArray[i + 0]);
+                verts.y = orbPosArray[i + 1];
+                verts.z = orbPosArray[i + 2];
+            
+                verts.normalize().multiplyScalar(4 + 0.3 * noise.perlin3(verts.y * k,verts.z * k, elapsedTime )) ;
+                
+                orbPosArray[i + 0] = verts.x;
+                orbPosArray[i + 1] = verts.y;
+                orbPosArray[i + 2] = verts.z; 
+            }
+
+            orb.geometry.attributes.position.needsUpdate = true;
+            orb.geometry.computeVertexNormals();
+
+            // Animating blue orb points
+            for (let i = 0; i < p3Array.length; i+=3) {
+
+                const verts = new THREE.Vector3();
+
+                verts.x = (p3Array[i + 0]);
+                verts.y = p3Array[i + 1];
+                verts.z = p3Array[i + 2];
+
+                verts.normalize().multiplyScalar(3.9 + Math.random() * 2.8 * noise.perlin3(verts.y * k * 2,verts.z * k * 2, elapsedTime )) ;
+
+                p3Array[i + 0] = verts.x;
+                p3Array[i + 1] = verts.y;
+                p3Array[i + 2] = verts.z;  
+            }    
+
+            pointsMesh3.geometry.attributes.position.needsUpdate = true;
+            pointsMesh3.geometry.computeVertexNormals();
+
+            //Animating lightning strike mesh
+            if (lightning.length > 0 && lightningMesh.length > 0 ) {
+                
+                lightning[0].rayParameters.sourceOffset.copy( lightningPosArray[0] );
+                lightning[0].rayParameters.destOffset.copy( lightningPosArray[1] );
+
+                
+                lightning[1].rayParameters.sourceOffset.copy( lightningPosArray[2] );
+                lightning[1].rayParameters.destOffset.copy( lightningPosArray[3] );
+                
+                lightning[2].rayParameters.sourceOffset.copy( lightningPosArray[4] );
+                lightning[2].rayParameters.destOffset.copy( lightningPosArray[5] );
+                
+                lightning[3].rayParameters.sourceOffset.copy( lightningPosArray[6] );
+                lightning[3].rayParameters.destOffset.copy( lightningPosArray[7] );
+                
+                lightning[4].rayParameters.sourceOffset.copy( lightningPosArray[8] );
+                lightning[4].rayParameters.destOffset.copy( lightningPosArray[9] );
+                
+                lightning[5].rayParameters.sourceOffset.copy( lightningPosArray[10] );
+                lightning[5].rayParameters.destOffset.copy( lightningPosArray[11] );
+                
+                lightning[6].rayParameters.sourceOffset.copy( lightningPosArray[12] );
+                lightning[6].rayParameters.destOffset.copy( lightningPosArray[13] );
+                
+                lightning[7].rayParameters.sourceOffset.copy( lightningPosArray[14] );
+                lightning[7].rayParameters.destOffset.copy( lightningPosArray[15] );
+                
+                lightning[8].rayParameters.sourceOffset.copy( lightningPosArray[16] );
+                lightning[8].rayParameters.destOffset.copy( lightningPosArray[17] );
+
+                lightning[9].rayParameters.sourceOffset.copy( lightningPosArray[18] );
+                lightning[9].rayParameters.destOffset.copy( lightningPosArray[19] );
+
+                lightning[10].rayParameters.sourceOffset.copy( lightningPosArray[20] );
+                lightning[10].rayParameters.destOffset.copy( lightningPosArray[21] );
+
+                lightning[11].rayParameters.sourceOffset.copy( lightningPosArray[22] );
+                lightning[11].rayParameters.destOffset.copy( lightningPosArray[23] );
+
+                lightning[12].rayParameters.sourceOffset.copy( lightningPosArray[24] );
+                lightning[12].rayParameters.destOffset.copy( lightningPosArray[25] );
+
+                lightning[13].rayParameters.sourceOffset.copy( lightningPosArray[26] );
+                lightning[13].rayParameters.destOffset.copy( lightningPosArray[27] );
+
+                lightning[14].rayParameters.sourceOffset.copy( lightningPosArray[28] );
+                lightning[14].rayParameters.destOffset.copy( lightningPosArray[29] );
+
+                lightning[15].rayParameters.sourceOffset.copy( lightningPosArray[30] );
+                lightning[15].rayParameters.destOffset.copy( lightningPosArray[31] );
+
+                lightning[16].rayParameters.sourceOffset.copy( lightningPosArray[32] );
+                lightning[16].rayParameters.destOffset.copy( lightningPosArray[33] );
+                
+                lightning[17].rayParameters.sourceOffset.copy( lightningPosArray[34] );
+                lightning[17].rayParameters.destOffset.copy( lightningPosArray[35] );
+
+                lightning[18].rayParameters.sourceOffset.copy( lightningPosArray[36] );
+                lightning[18].rayParameters.destOffset.copy( lightningPosArray[37] );
+
+                lightning[19].rayParameters.sourceOffset.copy( lightningPosArray[38] );
+                lightning[19].rayParameters.destOffset.copy( lightningPosArray[39] );
+
+                for (let i = 0; i < lightning.length; i++) {
+                    
+                    lightning[i].update(elapsedTime); 
+                }
+            }
+
+            mesh.material.opacity = Math.random();
+
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+
+        render();
+    </script>
+    
+</body>
+</html>
