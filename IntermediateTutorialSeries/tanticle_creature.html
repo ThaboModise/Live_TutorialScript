@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    body{
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+</style>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "../three.js-master/build/three.module.js",
+					"three/addons/": "../three.js-master/examples/jsm/"
+				}
+			}
+		</script>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+        
+        const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias:true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        const camera = new THREE.PerspectiveCamera(45, parseInt(window.getComputedStyle(canvas).getPropertyValue("width")) / parseInt(window.getComputedStyle(canvas).getPropertyValue("height")), 1.0, 1000);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x222222);
+        const light = new THREE.PointLight();
+        const light2 = new THREE.AmbientLight();
+        light.intensity = 500;
+        light2.intensity = 100.0;
+
+        const dodecaHedron = new THREE.DodecahedronGeometry(3, 2);
+        const dodecaHedronMat = new THREE.MeshStandardMaterial({color: 0xff0000});
+        //const dodecaHedronMat = new THREE.MeshPhysicalMaterial({roughness: 0, transmission: 1.0, transparent: true, thickness: 5.0, opacity: 0.8})
+        const dodecaHedronMesh = new THREE.Mesh(dodecaHedron, dodecaHedronMat);
+        dodecaHedronMesh.matrixAutoUpdate = false;
+
+        let normals = dodecaHedron.attributes.normal;
+        let position = dodecaHedron.attributes.position;
+
+        const linePoints = [];
+        const tubes = [];
+        const curves = [];
+
+        for (let i = 0; i < 5; i++) {
+            linePoints.push(new THREE.Vector3(0, 0, i * 3)); 
+        }
+
+        const curve = new THREE.CatmullRomCurve3(linePoints);
+        const curvePoints = curve.getPoints();
+
+        const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.1, 8, false);
+        const tubeMat = new THREE.MeshPhysicalMaterial({attenuationColor: 0x000000, roughness: 0, transmission: 1.0, transparent: true, thickness: 5.0, opacity: 0.8})
+        const tubeMesh = new THREE.InstancedMesh(tubeGeo, tubeMat, normals.count);
+        tubeMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+        const normalPos = new THREE.Vector3();
+        const vertexPos = new THREE.Vector3();
+        const dummyObj = new THREE.Object3D();
+
+        function tubeAnimation(){
+            for (let i = 0; i < normals.count; i++) {
+                normalPos.fromBufferAttribute(normals, i);
+                vertexPos.fromBufferAttribute(position, i);
+                normalPos.add(vertexPos);
+
+                dummyObj.position.copy(vertexPos);
+                dummyObj.lookAt(normalPos);
+                
+                dummyObj.updateMatrix();
+                dummyObj.updateMatrixWorld();
+            
+                tubeMesh.setMatrixAt(i,dummyObj.matrix)
+                dodecaHedronMesh.add(tubeMesh);
+
+                tubeMesh.instanceMatrix.needsUpdate = true;
+            }
+
+            //console.log("tube InstanceMesh: ", tubeMesh.geometry);
+        }
+
+        tubeAnimation();
+
+        function dodecaUpdate(time){
+            dodecaHedronMesh.rotation.y = Math.sin(time  * 0.05) * Math.PI;
+            dodecaHedronMesh.rotation.x = Math.sin(time  * 0.06) * Math.PI;
+           
+            dodecaHedronMesh.updateMatrix();
+            dodecaHedronMesh.updateMatrixWorld();
+        }
+
+        
+        scene.add(dodecaHedronMesh);
+        scene.add(light, light2);
+
+        camera.position.y = 10;
+        camera.position.z = 10;
+        camera.lookAt(scene.position);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        let t = 0;
+
+        function render(){
+            t += 0.03;
+
+            dodecaUpdate(t);
+
+            let offset = 0;
+            for (let i = 0; i < curve.points.length; i++) {
+               
+                curve.points[i].y = Math.sin( t - offset) * offset;
+                curve.points[i].x = Math.cos( t - offset) * offset;
+                
+                offset += 0.9;
+            }
+
+            tubeMesh.geometry.dispose();
+            tubeMesh.geometry = new THREE.TubeGeometry(curve, 20, 0.1, 8, false);
+
+            tubeMesh.instanceMatrix.needsUpdate = true;
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+
+        render();
+    </script>
+    
+</body>
+</html>
