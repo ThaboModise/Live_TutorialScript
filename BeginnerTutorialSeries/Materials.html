@@ -32,6 +32,9 @@
         const light = new THREE.PointLight();
         const light2 = new THREE.PointLight();
 
+        light.intenstiy = 100;
+        light2.intensity = 100;
+
         const bgCubeGeo = new THREE.BoxGeometry(20,15,30);
         const bgCubeMat = new THREE.MeshStandardMaterial({color: 0x0044ff, metalness: 0.8,roughness: 0.8, side: THREE.BackSide});
         const bgCubeMesh = new THREE.Mesh(bgCubeGeo, bgCubeMat);
@@ -61,7 +64,7 @@
         scene.add(sphereMesh);
         scene.add(cylinderMesh);
         scene.add(toonMesh);
-        //scene.add(light);
+        scene.add(light);
         scene.add(light2);
 
         icosaMesh.position.y = 6;
