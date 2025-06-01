@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from "../three.js-master/build/three.module.js";
+        import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const clock = new THREE.Clock();
+
+        const texture = new THREE.TextureLoader().load("../resources/images/test_particle_6.png");
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        class CustomParticle extends THREE.Sprite {
+            constructor(texture, color, lerpToColor, alphaTest, opacity, myRotation, randomScale, randomRotation ) {
+            const material = new THREE.SpriteMaterial({color: color, map: texture, alphaTest: alphaTest, opacity: opacity, transparent: true});
+            let scale;
+            let rotation = myRotation;
+            let randRotation = randomRotation;
+
+            if(randomScale === undefined){
+                scale = 1.0;
+            }
+            else{
+                const randScale = Math.random() * randomScale;
+                scale = randScale > 1.0 ? randScale: 1.0;
+            }
+
+            if (randomRotation !== undefined) {
+                //console.og("here")
+                randRotation = Math.random() * randomRotation;
+                randRotation = randRotation > 0.0 ? randRotation: 0.01;
+                
+            }
+            
+            super(material);
+
+            this.position.set(1, 0, 0);
+            this.startTime = clock.getElapsedTime();
+            this.currentTime;
+            this.scale.set(scale, scale, scale);
+            this.randRotation = randRotation;
+            this.myRotation = rotation;
+            this.lerpToColor = lerpToColor;
+            
+            this.material.blending = THREE.AdditiveBlending;
+            }
+
+            update() {
+            
+            this.position.multiplyScalar(1.005);
+
+            this.updateMatrix();
+            this.updateMatrixWorld();
+
+            if(this.myRotation !== undefined) this.material.rotation += this.myRotation;
+            if(this.randRotation !== undefined) this.material.rotation += this.randRotation;
+            
+            this.material.color.lerp(new THREE.Color(this.lerpToColor), 0.003);
+            }
+        }
+
+        class ParticleEmitter {
+            constructor(texture, color, lerpToColor, alphaTest, opacity, myRotation, randomScale, randomRotation) {
+                this.particles = [];
+                this.group = new THREE.Group();
+                this.timer = 0;
+                
+                this.color = color;
+                this.lerpToColor = lerpToColor;
+                this.texture = texture;
+                this.alphaTest = alphaTest;
+                this.opacity = opacity;
+                this.myRotation = myRotation;
+                this.randomScale = randomScale;
+                this.randomRotation = randomRotation
+                scene.add(this.group);
+                
+            }
+
+            emitParticle() {
+            
+                const delta = clock.getDelta();
+                this.timer += delta;
+                
+                const particle = new CustomParticle(this.texture, this.color, this.lerpToColor, this.alphaTest, this.opacity, this.myRotation, this.randomScale, this.randomRotation);
+                particle.currentTime = clock.getElapsedTime();
+                this.group.add(particle);
+                this.particles.push(particle);
+                
+            }
+
+            updateParticles() {
+                this.particles.forEach((particle) => {
+                
+                    particle.currentTime = clock.getElapsedTime();
+                    if((particle.currentTime - particle.startTime) > 8){
+                    
+                        this.group.remove(particle);
+                    }
+                    
+                    particle.update();
+                
+                });
+            }
+        }
+
+
+        const particleParams = {
+            texture : texture,
+            color : 0x00ffaa,
+            lerpToColor: 0xff0000,
+            alphaTest : 0.001,
+            opacity : 0.3,
+            rotationFactor : undefined,
+            scaleFactor : 2.5, 
+            randRotationFactor : 0.003
+        }
+
+        const particleEmitter = new ParticleEmitter(particleParams.texture, particleParams.color, particleParams.lerpToColor, particleParams.alphaTest, particleParams.opacity, particleParams.rotationFactor, particleParams.scaleFactor, particleParams.randRotationFactor);
+        particleEmitter.group.position.x = -8;
+        
+        
+       
+
+        camera.position.z = 5;
+        
+        const zNegative = new THREE.Vector3(0, 0, -1);
+        camera.lookAt(zNegative);
+       
+        const controls = new OrbitControls(camera, renderer.domElement);
+ 
+        const render = () => {
+
+            particleEmitter.emitParticle();
+
+            particleEmitter.updateParticles();
+
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        };
+
+        render();
+
+    </script>
+    
+</body>
+</html>

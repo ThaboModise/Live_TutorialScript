@@ -1070,7 +1070,7 @@
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             intersection();
-            renderer.render(scene.camera);
+            renderer.render(scene,camera);
         }
 
 
@@ -1147,10 +1147,10 @@
             }
 
             
-            //requestAnimationFrame(render);
-            //multiShaderRenderer.render(scene_2, camera_2);
-            //composer.render();
-            renderer.render(scene, camera);
+            requestAnimationFrame(render);
+            multiShaderRenderer.render(scene_2, camera_2);
+            composer.render();
+            //renderer.render(scene, camera);
             
             
         }
