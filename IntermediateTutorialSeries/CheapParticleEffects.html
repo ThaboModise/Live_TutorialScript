@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding:0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+        import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+        import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+        import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+        import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+        import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"; 
+        import { CopyShader } from "three/addons/shaders/CopyShader.js";
+
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        const light = new THREE.PointLight();
+        light.distance = 16.5;
+        light.castShadow = true;
+        light.shadow.bias = - 0.005;
+        light.shadow.mapSize.width = 1024; 
+        light.shadow.mapSize.height = 1024; 
+        light.shadow.camera.near = 0.1;
+        light.shadow.camera.far = 1000;
+        light.intensity = 50;
+
+        const sphereGeo = new THREE.SphereGeometry(5);
+
+        const vertexArray = sphereGeo.attributes.position.array;
+        const vertexIndices = [];
+        let meshIndex = 0;
+
+        for (let i = 0; i < vertexArray.length; i += 3) {
+            const index = new THREE.Vector3();
+
+            for (let j = 0; j < 9; j++) {
+
+                index.x = vertexArray[i];
+                index.y = vertexArray[i + 1];
+                index.z = vertexArray[i + 2]
+
+                vertexIndices.push(index);
+                 
+            }  
+        }
+
+        const mesh  = new THREE.InstancedMesh(new THREE.TorusGeometry(2), new THREE.MeshPhongMaterial({opacity: 1.0, specular: 0xffffff, transparent : true}), vertexIndices.length);
+        mesh.receiveShadow = true;
+        mesh.castShadow = true;
+
+        for (let i = 0; i < vertexIndices.length; i++) {
+
+            const position = new THREE.Vector3(vertexIndices[i].x + Math.sin(Math.random() * Math.PI / 3) - Math.sin(Math.random() * Math.PI / 3) , vertexIndices[i].y  + Math.sin(Math.random() * Math.PI / 3) - Math.sin(Math.random() * Math.PI / 3), vertexIndices[i].z + Math.sin(Math.random() * Math.PI / 3) - Math.sin(Math.random() * Math.PI / 3));
+           
+            const scale = new THREE.Vector3(Math.random() * 0.15, Math.random() * 0.15, Math.random() * 0.15);
+            const quat = new THREE.Quaternion(Math.random() * 0.5, Math.random() * 0.5,Math.random() * 0.5);
+
+            const matrix = new THREE.Matrix4();
+            matrix.compose(position, quat, scale);
+
+            mesh.setMatrixAt(meshIndex,matrix);
+            meshIndex++;
+        }
+
+        const instMeshColor1 = new THREE.Color(0xff6000);
+        const instMeshColor2 = new THREE.Color(0x0000ff);
+
+        const textureLoader = new THREE.TextureLoader();
+        const texture = textureLoader.load("../resources/images/hexagon_tex.jpg");
+
+        const box = new THREE.Mesh(new THREE.BoxGeometry(20, 20, 20), new THREE.MeshPhongMaterial({specular: 0xffffff, side:  THREE.BackSide}));
+        scene.add(box);
+        box.receiveShadow = true;
+
+        // Creating glowing starball
+        const lightSphere = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshLambertMaterial({/*emissive: 0xffffff,*/ alphaMap: texture, alphaTest: 0.9}));
+        lightSphere.castShadow = true;
+        
+        scene.add(mesh);
+        scene.add(lightSphere);
+
+        const effectCopy = new ShaderPass(CopyShader);
+        const bloomComposer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.5, 0.);
+        const outputPass = new OutputPass();
+        
+        bloomComposer.addPass(renderPass);
+        bloomComposer.addPass(bloomPass);
+        //bloomComposer.addPass(outputPass);
+        bloomComposer.addPass(effectCopy);
+
+        scene.add(light);
+
+
+        camera.position.z = 30;
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        
+        let clock = new THREE.Clock();
+
+
+        function render(){
+         
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            light.color.r = Math.abs(Math.sin(elapsedTime) * 1);
+            light.color.g = Math.abs(Math.sin(elapsedTime - 2) * 1);
+            light.color.b = Math.abs(Math.sin(elapsedTime - 2.5) * 1);
+            
+            lightSphere.rotation.x += Math.abs(Math.sin(elapsedTime) * 0.002) + 0.005;
+            lightSphere.rotation.y += Math.abs(Math.sin(elapsedTime * 0.9) * 0.002) + 0.005;
+
+            mesh.material.color.lerpColors(instMeshColor1, instMeshColor2, Math.abs(Math.sin(elapsedTime * 1.5) * 1));
+
+            mesh.rotation.y += 0.009;
+
+            camera.lookAt(scene.position);
+
+            requestAnimationFrame(render);
+            //renderer.render(scene, camera);
+            bloomComposer.render();
+        }
+
+        render();
+
+    </script>
+    
+</body>
+</html>

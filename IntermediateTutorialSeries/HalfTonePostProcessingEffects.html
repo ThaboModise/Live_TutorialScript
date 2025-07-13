@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+        import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+        import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+        import { HalftonePass } from "three/addons/postprocessing/HalftonePass.js"      
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import { OutlinePass } from "three/addons/postprocessing/OutlinePass.js";
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+        import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xaaaaaa);
+
+        const ambientLight = new THREE.AmbientLight();
+        ambientLight.intensity = 1.5;
+        scene.add(ambientLight);
+
+        const light = new THREE.PointLight();
+        light.intensity = 100;
+        light.castShadow = true;
+        light.shadow.mapSize.width = 512; 
+        light.shadow.mapSize.height = 512; 
+        light.shadow.camera.near = 0.5; 
+        light.shadow.camera.far = 500; 
+
+        const cubeGeo = new THREE.BoxGeometry(20,30,20);
+        const cubeMat = new THREE.MeshStandardMaterial({color: 0x00ff00, emissive: 0x222222, side: THREE.BackSide});
+        const cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
+        cubeMesh.receiveShadow = true;
+
+        const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(1024);
+        const cubeCam = new THREE.CubeCamera(0.1, 20, cubeRenderTarget );
+
+        scene.add(cubeCam);
+
+        let pi = (Math.PI * 2) / 4;
+
+        const boxArr = [];
+        
+        for (let i = 0; i < 8; i++) {
+            const boxMat = new THREE.MeshPhongMaterial({emissive: Math.random() * 0xffffff, envMap: cubeRenderTarget.texture});
+            const mesh = cubeMesh.clone();
+            mesh.castShadow = true;
+            mesh.scale.set(0.1, 0.1, 0.1);
+            mesh.material = boxMat;
+            if(i < 4){
+                mesh.position.x = Math.sin(pi * i) * 6;
+                mesh.position.z = Math.cos(pi * i) * 6;
+                mesh.position.y = 8;
+            }
+            else{
+                mesh.position.x = Math.sin(pi * i) * 6;
+                mesh.position.z = Math.cos(pi * i) * 6;
+                mesh.position.y = -8;
+            }
+            boxArr.push(mesh);
+            scene.add(mesh);
+        }
+
+        scene.add(cubeMesh);
+        scene.add(light);
+
+        const gui = new GUI();
+
+        const params = {
+            shape: 1,
+            radius: 4.0,
+            rotateR: Math.PI / 12,
+            rotateB: Math.PI / 12 * 2,
+            rotateG: Math.PI / 12 * 3,
+            scatter: 0,
+            blending: 1,
+            blendingMode: 1,
+            greyscale: false,
+            disable: false
+        };
+
+        const composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        const halftonePass = new HalftonePass( window.innerWidth, window.innerHeight, params );
+        const outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), scene, camera );
+        outlinePass.edgeThickness = 1.0;
+        outlinePass.edgeStrength = 10.0;
+
+		const outputPass = new OutputPass();
+        
+        const effectFXAA = new ShaderPass( FXAAShader );
+        effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+        
+        composer.addPass( renderPass );
+        composer.addPass( halftonePass );
+        composer.addPass( outlinePass );
+        composer.addPass( outputPass );
+        composer.addPass( effectFXAA );	
+
+        const controller = {
+           
+            radius: halftonePass.uniforms[ 'radius' ].value,
+            rotateR: halftonePass.uniforms[ 'rotateR' ].value / ( Math.PI / 180 ),
+            rotateG: halftonePass.uniforms[ 'rotateG' ].value / ( Math.PI / 180 ),
+            rotateB: halftonePass.uniforms[ 'rotateB' ].value / ( Math.PI / 180 ),
+            scatter: halftonePass.uniforms[ 'scatter' ].value,
+            shape: halftonePass.uniforms[ 'shape' ].value,
+            greyscale: halftonePass.uniforms[ 'greyscale' ].value,
+            blending: halftonePass.uniforms[ 'blending' ].value,
+            blendingMode: halftonePass.uniforms[ 'blendingMode' ].value,
+            disable: halftonePass.uniforms[ 'disable' ].value
+            
+        };
+
+        function onGUIChange() {
+
+            // update uniforms
+            halftonePass.uniforms[ 'radius' ].value = controller.radius;
+            halftonePass.uniforms[ 'rotateR' ].value = controller.rotateR * ( Math.PI / 180 );
+            halftonePass.uniforms[ 'rotateG' ].value = controller.rotateG * ( Math.PI / 180 );
+            halftonePass.uniforms[ 'rotateB' ].value = controller.rotateB * ( Math.PI / 180 );
+            halftonePass.uniforms[ 'scatter' ].value = controller.scatter;
+            halftonePass.uniforms[ 'shape' ].value = controller.shape;
+            halftonePass.uniforms[ 'greyscale' ].value = controller.greyscale;
+            halftonePass.uniforms[ 'blending' ].value = controller.blending;
+            halftonePass.uniforms[ 'blendingMode' ].value = controller.blendingMode;
+            halftonePass.uniforms[ 'disable' ].value = controller.disable;
+
+        }
+
+        
+        const halfTone = gui.addFolder("Halftone_Ctrls");
+
+        halfTone.add( controller, 'shape', { 'Dot': 1, 'Ellipse': 2, 'Line': 3, 'Square': 4 } ).onChange( onGUIChange );
+        halfTone.add( controller, 'radius', 0, 25).onChange( onGUIChange );
+        halfTone.add( controller, 'rotateR', 0, 90 ).onChange( onGUIChange );
+        halfTone.add( controller, 'rotateG', 0, 90 ).onChange( onGUIChange );
+        halfTone.add( controller, 'rotateB', 0, 90 ).onChange( onGUIChange );
+        halfTone.add( controller, 'scatter', 0, 1, 0.01 ).onChange( onGUIChange );
+        halfTone.add( controller, 'greyscale' ).onChange( onGUIChange );
+        halfTone.add( controller, 'blending', 0, 1, 0.01 ).onChange( onGUIChange );
+        halfTone.add( controller, 'blendingMode', { 'Linear': 1, 'Multiply': 2, 'Add': 3, 'Lighter': 4, 'Darker': 5 } ).onChange( onGUIChange );
+        halfTone.add( controller, 'disable' ).onChange( onGUIChange );
+        
+
+        outlinePass.selectedObjects = boxArr;
+
+        const clock = new THREE.Clock();
+
+        
+        camera.position.z = 35;
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        
+        function render(){
+        
+            renderer.autoClear = false;
+            renderer.clear();
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            for (let i = 0; i < boxArr.length; i++) {
+                boxArr[i].scale.set(Math.abs(Math.sin(elapsedTime  +  i) * 0.1) + 0.05, Math.abs(Math.sin(elapsedTime  +  i) * 0.1) + 0.05, Math.abs(Math.sin(elapsedTime  +  i) * 0.1) + 0.05 )
+            }
+            
+            cubeMesh.material.color.r = Math.abs(Math.sin(elapsedTime) * 1) ;
+            cubeMesh.material.color.g = Math.abs(Math.sin(elapsedTime / 2.1) * 1);
+            cubeMesh.material.color.b = Math.abs(Math.sin(elapsedTime / 2.6) * 1);
+            
+            cubeMesh.rotation.y += 0.01;
+            
+            cubeCam.update(renderer, scene);
+
+            requestAnimationFrame(render);
+            //renderer.render(scene, camera);
+            composer.render();
+        }
+
+        render();
+
+    </script>
+    
+</body>
+</html>

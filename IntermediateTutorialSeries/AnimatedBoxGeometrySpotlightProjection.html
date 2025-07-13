@@ -27,8 +27,8 @@
         }
     </script>
     <script type="module">
-        import * as THREE  from "../three.js-master/build/three.module.js";
-        import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+        import * as THREE  from "three";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
         const renderer = new THREE.WebGLRenderer({antialias: true});
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -42,15 +42,15 @@
         let spotLight;
         let spotLight2;
 
-        new THREE.TextureLoader().load("../resources/images/logo_Icon.png",
+        new THREE.TextureLoader().load("../resources/images/cfs_logo_plain_01.png",
             function(texture){
                 console.log("texture:", texture);
                 spotLight = new THREE.SpotLight();
                 spotLight.map = texture;
                 spotLight.penumbra = 0;
                 spotLight.angle = 1;
-
-                console.log("Spotlight:", spotLight);
+                spotLight.intensity = 1000;
+                //console.log("Spotlight:", spotLight);
 
                 spotLight2 = spotLight.clone();
                 spotLight2.color = new THREE.Color(0x0000ff);
@@ -60,15 +60,16 @@
 
                 spotLight2.position.z = -30;
                 spotLight2.rotation.y = Math.PI * 0.5;
+                spotLight2.intensity = 1000;
             }
         );
 
         let boxArr = [];
-        let matGRP = [new THREE.MeshStandardMaterial({metalness: 1, roughness: 0.7, wireframe: false, specular: 0.9}), new THREE.MeshLambertMaterial()]
+        let matGRP = [new THREE.MeshStandardMaterial({metalness: 1, roughness: 0.5, wireframe: false}), new THREE.MeshLambertMaterial()]
 
         for (let index = 0; index < 10000; index++) {
             
-            let mesh = new THREE.Mesh(new THREE.BoxGeometry(), matGRP[1]);
+            let mesh = new THREE.Mesh(new THREE.BoxGeometry(), matGRP[0]);
             boxArr.push(mesh);
             
         }
@@ -88,12 +89,9 @@
         function bufferWaves(waveSize, magnitude){
             const time = performance.now() * 0.005;
 
-            let vec3 = new THREE.Vector3();
-            let center = new THREE.Vector3();
-
             for (let i = 0; i < boxArr.length; i++) {
                 
-                boxArr[i].rotation.set(time * 0.01,time * 0.02,time * 0.03);
+                boxArr[i].rotation.set(time * 0.01,time * 0.02 ,time * 0.03 );
                 boxArr[i].position.z = Math.sin((i /- waveSize) * 0.01 + (time)) + magnitude;
                 
             }

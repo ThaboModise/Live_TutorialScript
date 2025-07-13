@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding:0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+
+    <canvas id="canvas"></canvas>
+    <script src="../three.js-master/examples/jsm/libs/ammo.wasm.js"></script>
+    <script type="module">
+        import * as THREE from "../three.js-master/build/three.module.js";
+        import { OrbitControls } from "../three.js-master/examples/jsm/controls/OrbitControls.js";
+
+        // Lesson1 global variables
+        let renderer, scene, camera, pLight, deltaTime, rigidBodies = [],clock, width, height;
+        let solver, dispatcher, broadphase, tmpTrans, physicsWorld; 
+
+        const STATE = {DISABLE_DEACTIVATION: 4};
+        let staticGrp = 1, activeGrp_1 = 2, activeGrp_2 = 4 ;
+
+        //Lesson 2 global variables
+
+        let interactables = [], selectedObjects = [], INTERSECTED;
+        let quat, scale, hinge, slider;
+
+
+        let ballObject = null, kObject;
+        let posObj = null, quatObj = null;
+        let moveDirection = {forward: 0, back: 0, right: 0, left: 0};
+        let kMoveDirection = {forward: 0, back: 0, right: 0, left: 0};
+        
+        const FLAGS = {CF_KINEMATIC_OBJECT: 2};
+        let colGroupPlane = 1, colGroupRedBall = 2, colGroupGreenBall = 4;
+        let tmpPos = new THREE.Vector3();
+        let tmpQuat = new THREE.Quaternion();
+        let ammoTmpPos = null, ammoTmpQuat = null;
+        
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+        
+        
+
+
+        Ammo().then(start);
+
+        function start(){
+            tmpTrans = new Ammo.btTransform();
+            ammoTmpPos = new Ammo.btVector3();
+            ammoTmpQuat = new Ammo.btQuaternion();
+
+            setPhysics();
+            setGraphics();
+            createBlock();
+            createBall();
+
+            for (let i = 0; i < 4; i++) {
+                createBox();
+                createCylinder();
+                createCone(); 
+            }
+
+            createKinematicBox();
+
+            createJointObjects_1();
+            createConstraintObject();
+            createJointObjects_2();
+            createHingeObject();
+            createSliderConstraint();
+            
+            window.addEventListener("mousedown", onMouseClick, false);
+            
+            keyBoardEvents();
+            render();
+        }
+
+        function setPhysics(){
+            let collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+            dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+            solver = new Ammo.btSequentialImpulseConstraintSolver();
+            broadphase = new Ammo.btDbvtBroadphase();
+
+            physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+            physicsWorld.setGravity(new Ammo.btVector3(0, -9, 0));
+        }
+
+        function setGraphics(){
+            clock = new THREE.Clock();
+            width = parseInt(window.getComputedStyle(canvas).getPropertyValue("width"));
+            height = parseInt(window.getComputedStyle(canvas).getPropertyValue("height"));
+            renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+
+            scene= new THREE.Scene();
+            scene.background = new THREE.Color(0xaaaaaa);
+            camera = new THREE.PerspectiveCamera(45, width / height, 1.0, 1000 );
+            pLight = new THREE.PointLight(Math.floor(Math.random() *  0xffffff));
+            pLight.castShadow = true;
+
+            pLight.intensity = 500;
+            pLight.position.y = 25;
+            pLight.position.x = 2;
+
+
+            function mouseMove(event){
+                event.preventDefault();
+                mouse.x = (event.clientX /  window.innerWidth) * 2 -1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                intersection();
+            }
+
+            function addSelectedObjects(object){
+                if (selectedObjects.length > 0) {
+                    selectedObjects.pop();
+                }
+                selectedObjects.push(object);
+            }
+
+            function intersection(){
+                raycaster.setFromCamera(mouse,camera);
+                const intersects = raycaster.intersectObjects(interactables, false);
+
+                //console.log("raycaster :", intersects);
+                
+                if ( intersects.length > 0 ) {
+
+                    if ( INTERSECTED != intersects[0].object && intersects[0].object.type === "Mesh" ) {
+
+                        INTERSECTED = intersects[0].object;
+                        addSelectedObjects(INTERSECTED);
+                        
+                        console.log(INTERSECTED.name);
+                }
+
+                } else {
+
+                    INTERSECTED = null;
+
+                }
+            }
+
+
+
+
+            function windowResize(){
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+    
+            window.addEventListener("resize", windowResize);
+            renderer.domElement.addEventListener("mousemove", mouseMove);
+
+            scene.add(pLight);
+
+            camera.position.y = 10;
+            camera.position.z = 50;
+            camera.lookAt(scene.position);
+
+            const orbitController = new OrbitControls(camera, renderer.domElement);
+           
+        }
+
+        function keyBoardEvents(){
+            window.onkeydown = (evt)=>{
+                handleKeyDown(evt);
+            }
+
+            window.onkeyup = (evt)=>{
+                handleKeyUp(evt);
+            }
+        }
+
+        function handleKeyDown(event){
+
+            let keyCode = event.keyCode;
+
+            switch(keyCode){
+
+                case 87: //W: FORWARD
+                    moveDirection.forward = 1;
+                    if (kObject) {
+                       //console.log("world transform:", kObject.userData.physicsBody.getWorldTransform().getRotation());
+                    }
+                    break;
+
+                case 83: //S: BACK
+                    moveDirection.back = 1;
+                    //console.log("world transform:", kObject.userData.physicsBody.getWorldTransform().getOrigin().z());
+                    break;
+
+                case 65: //A: LEFT
+                    moveDirection.left = 1;
+                    console.log("world transform:", kObject.userData.physicsBody);
+                    break;
+
+                case 68: //D: RIGHT
+                    moveDirection.right = 1
+                    break;
+                case 38: //↑: FORWARD
+                    kMoveDirection.forward = 1
+                break;
+                
+                case 40: //↓: BACK
+                    kMoveDirection.back = 1
+                break;
+                
+                case 37: //←: LEFT
+                    kMoveDirection.left = 1
+                break;
+                
+                case 39: //→: RIGHT
+                    kMoveDirection.right = 1
+                break;
+            }
+        }
+
+
+        function handleKeyUp(event){
+            let keyCode = event.keyCode;
+
+            switch(keyCode){
+                case 87: //FORWARD
+                    moveDirection.forward = 0
+                    break;
+
+                case 83: //BACK
+                    moveDirection.back = 0
+                    break;
+
+                case 65: //LEFT
+                    moveDirection.left = 0
+                    break;
+
+                case 68: //RIGHT
+                    moveDirection.right = 0
+                    break;
+                case 38: //↑: FORWARD
+                    kMoveDirection.forward = 0
+                break;
+                
+                case 40: //↓: BACK
+                    kMoveDirection.back = 0
+                break;
+                
+                case 37: //←: LEFT
+                    kMoveDirection.left = 0
+                break;
+                
+                case 39: //→: RIGHT
+                    kMoveDirection.right = 0
+                break;                       
+
+            }
+
+        }
+
+
+
+        function onMouseClick(){
+            
+            const velocity = new Ammo.btVector3(raycaster.ray.direction.x, raycaster.ray.direction.y, raycaster.ray.direction.z);
+            const origin = new Ammo.btVector3(raycaster.ray.origin.x, raycaster.ray.origin.y, raycaster.ray.origin.z );
+            const forceFactor = 10;
+            velocity.op_mul(forceFactor);
+            
+           
+            if(INTERSECTED !== null){
+                
+                if(INTERSECTED.name === "hinge"){
+                  
+                    hinge.enableAngularMotor(true, 1.0, 1);
+                    INTERSECTED.userData.physicsBody.setLinearVelocity(velocity/*, origin*/);
+                }
+                else{
+                    //hinge.enableAngularMotor(false, 0, 0);
+                    INTERSECTED.userData.physicsBody.setLinearVelocity(velocity/*, origin*/);
+                }
+                
+            }
+        
+            
+        }
+
+
+        function createBlock(){
+            let pos = {x: 0, y: -5, z: 0},
+            scale = {x: 200, y: 0.2, z: 200},
+            quat = {x: 0, y: 0, z: Math.PI * 0, w: 1},
+
+            mass = 0;
+
+            let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({color: Math.floor(Math.random() * 0xffffff), emissive: Math.floor(Math.random() * 0xffffff)}));
+            block.receiveShadow = true;
+            block.name = "block";
+            scene.add(block);
+
+            block.position.set(pos.x, pos.y, pos.z);
+            block.quaternion.set(quat.x, quat.y, quat.z, quat.w);
+            block.scale.set(scale.x, scale.y, scale.z);
+
+            let transform = new Ammo.btTransform();
+
+            transform.setIdentity();
+            transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+            transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+
+            let ms = new Ammo.btDefaultMotionState(transform);
+
+            let colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
+            colShape.setMargin(0.05);
+
+            let localInertia = new Ammo.btVector3(0, 0, 0);
+            colShape.calculateLocalInertia(mass, localInertia);
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, ms, colShape, localInertia);
+            let body = new Ammo.btRigidBody(rbInfo);
+
+            physicsWorld.addRigidBody(body);
+
+        }
+
+        function createBall(){
+            let pos = {x: 0, y: 7, z: 0},
+            radius = 2,
+            quat = {x: 0, y: 0, z: 0, w: 1},
+
+            mass = 10;
+
+            let ball = ballObject =  new THREE.Mesh(new THREE.SphereGeometry(), new THREE.MeshPhysicalMaterial({wireframe: true, attenuationDistance: 1, attenuationColor: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            ball.castShadow = true;
+            ball.receiveShadow = true;
+            scene.add(ball);
+            interactables.push(ball);
+            ball.name = "ball";
+
+            ball.position.set(pos.x, pos.y, pos.z);
+            ball.scale.set(radius, radius, radius);
+
+            let transform = new Ammo.btTransform();
+
+            transform.setIdentity();
+            transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+            transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+
+            let ms = new Ammo.btDefaultMotionState(transform);
+
+            let colShape = new Ammo.btSphereShape(radius);
+            colShape.setMargin(0.05);
+
+            let localInertia = new Ammo.btVector3(0, 0, 0);
+            colShape.calculateLocalInertia(mass, localInertia);
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, ms, colShape, localInertia);
+            let body = new Ammo.btRigidBody(rbInfo);
+
+            
+            body.setActivationState(4);
+
+            physicsWorld.addRigidBody(body);
+
+            ball.userData.physicsBody = body;
+            
+            rigidBodies.push(ball);
+
+        }
+
+        function createKinematicBox(){
+
+            let pos = {x: 0, y: -2.6, z: 20};
+            let scale = {x: 5, y: 5, z: 5};
+            let quat = {x: 0, y: 0, z: 0, w: 1};
+            let mass = 0;
+
+            //threeJS Section
+            kObject = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({color: 0xa5c8ff}));
+
+            kObject.position.set(pos.x, pos.y, pos.z);
+            kObject.scale.set(scale.x, scale.y, scale.z);
+
+            kObject.castShadow = true;
+            kObject.receiveShadow = true;
+
+            scene.add(kObject);
+
+
+            //Ammojs Section
+            let transform = new Ammo.btTransform();
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            let motionState = new Ammo.btDefaultMotionState( transform );
+
+            let colShape = new Ammo.btBoxShape( new Ammo.btVector3( scale.x * 0.5, scale.y * 0.5, scale.z * 0.5 ) );
+            colShape.setMargin( 0.05 );
+
+            let localInertia = new Ammo.btVector3( 0, 0, 0 );
+            colShape.calculateLocalInertia( mass, localInertia );
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, colShape, localInertia );
+            let body = new Ammo.btRigidBody( rbInfo );
+
+            //body.setFriction(4);
+            //body.setRollingFriction(10);
+
+            body.setActivationState( STATE.DISABLE_DEACTIVATION );
+            body.setCollisionFlags( FLAGS.CF_KINEMATIC_OBJECT );
+
+
+            physicsWorld.addRigidBody( body );
+            kObject.userData.physicsBody = body;
+
+        }
+
+        function createBox(){
+            let pos = {x: -1, y: 6, z: 0},
+            scale = {x: 2, y: 2, z: 2},
+            quat = {x: Math.PI * Math.random() * 2.0, y: Math.PI * Math.random() * 2.0, z: Math.PI * Math.random() * 2.0, w: 1},
+
+            mass = 10;
+
+            let box = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            box.name = "box";
+            scene.add(box);
+            interactables.push(box);
+            
+
+            box.castShadow = true;
+
+            box.position.set(pos.x, pos.y, pos.z);
+            box.scale.set(scale.x, scale.y, scale.z);
+
+            let transform = new Ammo.btTransform();
+
+            transform.setIdentity();
+            transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+            transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+
+            let ms = new Ammo.btDefaultMotionState(transform);
+
+            let colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
+            colShape.setMargin(0.05);
+
+            let localInertia = new Ammo.btVector3(0, 0, 0);
+            colShape.calculateLocalInertia(mass, localInertia);
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, ms, colShape, localInertia);
+            let body = new Ammo.btRigidBody(rbInfo);
+
+            body.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+            physicsWorld.addRigidBody(body/*, activeGrp_1, staticGrp | activeGrp_2*/);
+
+            box.userData.physicsBody = body;
+
+            rigidBodies.push(box);
+        }
+
+        function createCylinder(){
+            let pos = {x: 4, y: 3, z: 0},
+            scale = {x: 2, y: 2, z: 2},
+            quat = {x: Math.PI * Math.random() * 2.0, y: Math.PI * Math.random() * 2.0, z: Math.PI * Math.random() * 2.0, w: 1},
+
+            mass = 10;
+
+            let cyl = new THREE.Mesh(new THREE.CylinderGeometry(), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            cyl.name = "cyl";
+            scene.add(cyl);
+            interactables.push(cyl);
+            
+
+            cyl.castShadow = true;
+
+            cyl.position.set(pos.x, pos.y, pos.z);
+            cyl.scale.set(scale.x, scale.y, scale.z);
+
+            let transform = new Ammo.btTransform();
+
+            transform.setIdentity();
+            transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+            transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+
+            let ms = new Ammo.btDefaultMotionState(transform);
+
+            let colShape = new Ammo.btCylinderShape(new Ammo.btVector3(scale.x , scale.y * 0.5  , scale.z  ));
+            colShape.setMargin(0.05);
+
+            let localInertia = new Ammo.btVector3(0, 0, 0);
+            colShape.calculateLocalInertia(mass, localInertia);
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, ms, colShape, localInertia);
+            let body = new Ammo.btRigidBody(rbInfo);
+
+            body.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+            physicsWorld.addRigidBody(body/*, activeGrp_2, staticGrp | activeGrp_1*/);
+
+            cyl.userData.physicsBody = body;
+
+            rigidBodies.push(cyl);
+        }
+
+        function createCone(){
+            let pos = {x: 4, y: 10, z: 0},
+            radius = 2, height = 3,
+            quat = {x: Math.PI * Math.random() * 2.0, y: Math.PI * Math.random() * 2.0, z: Math.PI * Math.random() * 2.0, w: 1},
+
+            mass = 10;
+
+            let cone = new THREE.Mesh(new THREE.ConeGeometry(), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            cone.name = "cone";
+            scene.add(cone);
+            interactables.push(cone);
+
+            cone.castShadow = true;
+
+            cone.position.set(pos.x, pos.y, pos.z);
+            
+            let transform = new Ammo.btTransform();
+
+            transform.setIdentity();
+            transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+            transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+
+            let ms = new Ammo.btDefaultMotionState(transform);
+
+            let colShape = new Ammo.btConeShape(radius * 0.5, height * 0.5);
+            colShape.setMargin(0.05);
+
+            let localInertia = new Ammo.btVector3(0, 0, 0);
+            colShape.calculateLocalInertia(mass, localInertia);
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, ms, colShape, localInertia);
+            let body = new Ammo.btRigidBody(rbInfo);
+
+            body.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+            physicsWorld.addRigidBody(body/*, activeGrp_2, staticGrp | activeGrp_1*/);
+
+            cone.userData.physicsBody = body;
+
+            rigidBodies.push(cone);
+        }
+
+        function createJointObjects_1(){
+    
+            let pos1 = {x: 5, y: 15, z: 0};
+            let pos2 = {x: 5, y: 11, z: 0};
+
+            let radius = 2;
+            let scale = {x: 2, y: 5, z: 2};
+            let quat = {x: 0, y: 0, z: 0, w: 1};
+            let mass1 = 0;
+            let mass2 = 2;
+
+            let transform = new Ammo.btTransform();
+
+            //Sphere Graphics
+            let ball = new THREE.Mesh(new THREE.SphereGeometry(radius), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            interactables.push(ball);
+            ball.position.set(pos1.x, pos1.y, pos1.z);
+
+            ball.castShadow = true;
+            ball.receiveShadow = true;
+
+            scene.add(ball);
+            interactables.push(ball);
+
+
+            //Sphere Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos1.x, pos1.y, pos1.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            let motionState = new Ammo.btDefaultMotionState( transform );
+
+            let sphereColShape = new Ammo.btSphereShape( radius );
+            sphereColShape.setMargin( 0.05 );
+
+            let localInertia = new Ammo.btVector3( 0, 0, 0 );
+            sphereColShape.calculateLocalInertia( mass1, localInertia );
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass1, motionState, sphereColShape, localInertia );
+            let sphereBody = new Ammo.btRigidBody( rbInfo );
+
+            physicsWorld.addRigidBody( sphereBody, colGroupGreenBall, colGroupRedBall );
+
+            ball.userData.physicsBody = sphereBody;
+            rigidBodies.push(ball);
+            
+
+            //Block Graphics
+            let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({attenuationDistance: 1, attenuationColor: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0}));
+            interactables.push(block);
+            block.position.set(pos2.x, pos2.y, pos2.z);
+            block.scale.set(scale.x, scale.y, scale.z);
+
+            block.castShadow = true;
+            block.receiveShadow = true;
+
+            scene.add(block);
+
+            //Block Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos2.x, pos2.y, pos2.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            motionState = new Ammo.btDefaultMotionState( transform );
+
+            let blockColShape = new Ammo.btBoxShape( new Ammo.btVector3( scale.x * 0.5, scale.y * 0.5, scale.z * 0.5 ) );
+            blockColShape.setMargin( 0.05 );
+
+            localInertia = new Ammo.btVector3( 0, 0, 0 );
+            blockColShape.calculateLocalInertia( mass2, localInertia );
+
+            rbInfo = new Ammo.btRigidBodyConstructionInfo( mass2, motionState, blockColShape, localInertia );
+            let blockBody = new Ammo.btRigidBody( rbInfo );
+            blockBody.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+            physicsWorld.addRigidBody( blockBody, colGroupGreenBall, colGroupRedBall);
+            
+           
+            block.userData.physicsBody = blockBody;
+            rigidBodies.push(block);
+
+
+            //Create Joints
+            let spherePivot = new Ammo.btVector3( 0, - radius, 0 );
+            let blockPivot = new Ammo.btVector3( 0, 2.5, 0 );
+
+            let p2p = new Ammo.btPoint2PointConstraint( sphereBody, blockBody, spherePivot, blockPivot);
+            physicsWorld.addConstraint( p2p, false );
+
+        }
+
+        function createConstraintObject(){
+    
+            let pos2 = {x: 0, y: 11, z: 0};
+            let radius = 2;
+            let scale = {x: 2, y: 7, z: 2};
+            let quat = {x: 0, y: 0, z: 0, w: 1};
+            
+            let mass2 = 2;
+
+            let transform = new Ammo.btTransform();
+
+            //Block Graphics
+            let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            interactables.push(block);
+            block.position.set(pos2.x, pos2.y, pos2.z);
+            block.scale.set(scale.x, scale.y, scale.z);
+
+            block.castShadow = true;
+            block.receiveShadow = true;
+
+            scene.add(block);
+
+            //Block Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos2.x, pos2.y, pos2.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            let motionState = new Ammo.btDefaultMotionState( transform );
+
+            let blockColShape = new Ammo.btBoxShape( new Ammo.btVector3( scale.x * 0.5, scale.y * 0.5, scale.z * 0.5 ) );
+            blockColShape.setMargin( 0.05 );
+
+            let localInertia = new Ammo.btVector3( 0, 0, 0 );
+            blockColShape.calculateLocalInertia( mass2, localInertia );
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass2, motionState, blockColShape, localInertia );
+            let blockBody = new Ammo.btRigidBody( rbInfo );
+            blockBody.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+            physicsWorld.addRigidBody( blockBody, colGroupGreenBall, colGroupRedBall);
+            
+           
+            block.userData.physicsBody = blockBody;
+            rigidBodies.push(block);
+
+
+            //Create Joints
+           
+            let blockPivot = new Ammo.btVector3( 0, 2.5, 0 );
+
+            let p2p = new Ammo.btPoint2PointConstraint(blockBody, blockPivot);
+            physicsWorld.addConstraint( p2p, false );
+
+        }
+
+        function createJointObjects_2(){
+    
+            let pos1 = {x: -5, y: 15, z: 0};
+            let pos2 = {x: -5, y: 11, z: 0};
+
+            let radius = 2;
+            let scale = {x: 2, y: 5, z: 2};
+            let quat = {x: 0, y: 0, z: 0, w: 1};
+            let mass1 = 0;
+            let mass2 = 2;
+
+            let transform = new Ammo.btTransform();
+
+            //Sphere Graphics
+            let cyl = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 2), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            interactables.push(cyl);
+            cyl.position.set(pos1.x, pos1.y, pos1.z);
+
+            cyl.castShadow = true;
+            cyl.receiveShadow = true;
+
+            scene.add(cyl);
+
+
+            //Sphere Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos1.x, pos1.y, pos1.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            let motionState = new Ammo.btDefaultMotionState( transform );
+
+            let sphereColShape = new Ammo.btCylinderShape( radius, 2 * 0.5, radius);
+            sphereColShape.setMargin( 0.05 );
+
+            let localInertia = new Ammo.btVector3( 0, 0, 0 );
+            sphereColShape.calculateLocalInertia( mass1, localInertia );
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass1, motionState, sphereColShape, localInertia );
+            let sphereBody = new Ammo.btRigidBody( rbInfo );
+
+            physicsWorld.addRigidBody( sphereBody, colGroupGreenBall, colGroupRedBall );
+
+            cyl.userData.physicsBody = sphereBody;
+            rigidBodies.push(cyl);
+            
+
+            //Block Graphics
+            let cone = new THREE.Mesh(new THREE.ConeGeometry(), new THREE.MeshPhysicalMaterial({attenuationDistance: 1, attenuationColor: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0}));
+            interactables.push(cone);
+            cone.position.set(pos2.x, pos2.y, pos2.z);
+            cone.scale.set(scale.x, scale.y, scale.z);
+
+            cone.castShadow = true;
+            cone.receiveShadow = true;
+
+            scene.add(cone);
+
+            //Block Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos2.x, pos2.y, pos2.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            motionState = new Ammo.btDefaultMotionState( transform );
+
+            let blockColShape = new Ammo.btConeShape( scale.x * 0.5, scale.y * 0.5);
+            blockColShape.setMargin( 0.05 );
+
+            localInertia = new Ammo.btVector3( 0, 0, 0 );
+            blockColShape.calculateLocalInertia( mass2, localInertia );
+
+            rbInfo = new Ammo.btRigidBodyConstructionInfo( mass2, motionState, blockColShape, localInertia );
+            let blockBody = new Ammo.btRigidBody( rbInfo );
+            blockBody.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+            physicsWorld.addRigidBody( blockBody, colGroupGreenBall, colGroupRedBall);
+            
+            cone.userData.physicsBody = blockBody;
+            rigidBodies.push(cone);
+
+            //Create Joints
+            let spherePivot = new Ammo.btVector3( 0, - 1, 0 );
+            let blockPivot = new Ammo.btVector3( 0, 2.5, 0 );
+
+            let p2p = new Ammo.btPoint2PointConstraint( sphereBody, blockBody, spherePivot, blockPivot);
+            physicsWorld.addConstraint( p2p, false );
+
+        }
+
+        function createHingeObject(){
+    
+            let pos = {x: -25, y: 6, z: 0};
+            let pos2 = {x: -20, y: 6, z: 0};
+            let radius = 2;
+            let scale = {x: 8, y: 20, z: 1};
+            let scale2 = {x: 4, y: 20, z: 1};
+            let quat = {x: 0, y: 0, z: 0, w: 1};
+            
+            let mass = 1;
+            let mass2 = 0;
+
+            let transform = new Ammo.btTransform();
+
+            //Block Graphics
+            let block_1 = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            block_1.name = "hinge";
+            interactables.push(block_1);
+            block_1.position.set(pos.x, pos.y, pos.z);
+            block_1.scale.set(scale.x, scale.y, scale.z);
+
+            block_1.castShadow = true;
+            block_1.receiveShadow = true;
+
+            scene.add(block_1);
+
+            //Block Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            let motionState = new Ammo.btDefaultMotionState( transform );
+
+            let blockColShape_1 = new Ammo.btBoxShape( new Ammo.btVector3( scale.x * 0.5, scale.y * 0.5, scale.z * 0.5 ) );
+            blockColShape_1.setMargin( 0.05 );
+
+            let localInertia = new Ammo.btVector3( 0, 0, 0 );
+            blockColShape_1.calculateLocalInertia( mass, localInertia );
+
+            let rbInfo_1 = new Ammo.btRigidBodyConstructionInfo( mass, motionState, blockColShape_1, localInertia );
+            let blockBody_1 = new Ammo.btRigidBody( rbInfo_1 );
+            blockBody_1.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+            physicsWorld.addRigidBody( blockBody_1, colGroupGreenBall, colGroupRedBall);
+            
+           
+            block_1.userData.physicsBody = blockBody_1;
+            rigidBodies.push(block_1);
+
+            //Block Graphics
+            let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            interactables.push(block);
+            block.position.set(pos2.x, pos2.y, pos2.z);
+            block.scale.set(scale2.x, scale2.y, scale2.z);
+
+            block.castShadow = true;
+            block.receiveShadow = true;
+
+            scene.add(block);
+
+            //Block Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos2.x, pos2.y, pos2.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            motionState = new Ammo.btDefaultMotionState( transform );
+
+            let blockColShape = new Ammo.btBoxShape( new Ammo.btVector3( scale2.x * 0.5, scale2.y * 0.5, scale2.z * 0.5 ) );
+            blockColShape.setMargin( 0.05 );
+
+            localInertia = new Ammo.btVector3( 0, 0, 0 );
+            blockColShape.calculateLocalInertia( mass2, localInertia );
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass2, motionState, blockColShape, localInertia );
+            let blockBody = new Ammo.btRigidBody( rbInfo );
+            blockBody.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+
+            physicsWorld.addRigidBody( blockBody, colGroupGreenBall, colGroupRedBall);
+            
+           
+            block.userData.physicsBody = blockBody;
+            rigidBodies.push(block);
+
+            
+            const hingePos_1 = new Ammo.btVector3(4.0, 0.0, 0.0);
+            const hingePos_2 = new Ammo.btVector3(-2.0, 0.0, 0.0);
+            const axis = new Ammo.btVector3(0, 0.01, 0);
+            let lowerLimit = -Math.PI ; // -45 degrees
+            let upperLimit = Math.PI ;  //  45 degrees
+
+            // Set the limits on the hinge constraint
+            
+
+            // Optionally enable and configure a motor
+            let enableMotor = true;
+            let targetVelocity = 0.0; //radians per second
+            let maxMotorImpulse = 10; // Maximum force the motor can apply
+
+
+            //Create Hinge
+            
+            hinge = new Ammo.btHingeConstraint(blockBody_1, blockBody, hingePos_1, hingePos_2, axis, axis, true);
+            hinge.setLimit(lowerLimit, upperLimit);
+            //hinge.enableAngularMotor(true, 1.0, 0.5);
+            
+            physicsWorld.addConstraint( hinge, true );
+        }
+
+        function createSliderConstraint(){
+    
+            let pos1 = {x: 28, y: 15, z: 0};
+            let pos2 = {x: 20, y: 15, z: 0};
+
+            let radius = 2;
+            let scale = {x: 2, y: 2, z: 2};
+            let quat = {x: 0, y: 0, z: 0, w: 1};
+            let mass1 = 2;
+            let mass2 = 0;
+
+            let transform = new Ammo.btTransform();
+
+            //Sphere Graphics
+            let box = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            //box.name = "slider";
+            interactables.push(box);
+            box.position.set(pos1.x, pos1.y, pos1.z);
+            box.scale.set(scale.x, scale.y, scale.z);
+
+            box.castShadow = true;
+            box.receiveShadow = true;
+
+            scene.add(box);
+
+
+            //Sphere Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos1.x, pos1.y, pos1.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            let motionState = new Ammo.btDefaultMotionState( transform );
+
+            let sphereColShape = new Ammo.btBoxShape( scale.x * 0.5, scale.y * 0.5, scale.z * 0.5);
+            sphereColShape.setMargin( 0.05 );
+
+            let localInertia = new Ammo.btVector3( 0, 0, 0 );
+            sphereColShape.calculateLocalInertia( mass1, localInertia );
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass1, motionState, sphereColShape, localInertia );
+            let sphereBody = new Ammo.btRigidBody( rbInfo );
+
+            sphereBody.setActivationState(STATE.DISABLE_DEACTIVATION);
+
+            physicsWorld.addRigidBody( sphereBody, colGroupGreenBall, colGroupRedBall );
+
+            box.userData.physicsBody = sphereBody;
+            rigidBodies.push(box);
+            
+
+            //Block Graphics
+            let block = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({color: Math.floor(Math.random() * 0xffffff),transmission: 1.0, reflectivity: 1.0, thickness: 0.1, roughness:0.5}));
+            
+            interactables.push(block);
+            block.position.set(pos2.x, pos2.y, pos2.z);
+            block.scale.set(scale.x, scale.y, scale.z);
+
+            block.castShadow = true;
+            block.receiveShadow = true;
+
+            scene.add(block);
+
+            //Block Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( pos2.x, pos2.y, pos2.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            motionState = new Ammo.btDefaultMotionState( transform );
+
+            let blockColShape = new Ammo.btBoxShape( scale.x * 0.5, scale.y * 0.5, scale.z * 0.5);
+            blockColShape.setMargin( 0.05 );
+
+            localInertia = new Ammo.btVector3( 0, 0, 0 );
+            blockColShape.calculateLocalInertia( mass2, localInertia );
+
+            rbInfo = new Ammo.btRigidBodyConstructionInfo( mass2, motionState, blockColShape, localInertia );
+            let blockBody = new Ammo.btRigidBody( rbInfo );
+            blockBody.setActivationState(STATE.DISABLE_DEACTIVATION);
+            blockBody.setCollisionFlags(FLAGS.CF_KINEMATIC_OBJECT);
+
+            physicsWorld.addRigidBody( blockBody, colGroupGreenBall, colGroupRedBall);
+            
+            block.userData.physicsBody = blockBody;
+            //rigidBodies.push(block);
+
+            //Create Joints
+            let sliderPos_1 = new Ammo.btVector3( -3, 0, 0 );
+            let sliderPos_2 = new Ammo.btVector3( 0, 0, 0 );
+
+            let sliderQuat_1 = new Ammo.btQuaternion(1, 0, 0, 1);
+            let sliderQuat_2 = new Ammo.btQuaternion(1, 0, 0, 1);
+
+
+            slider = new Ammo.btSliderConstraint(sphereBody, blockBody, new Ammo.btTransform(sliderQuat_1,sliderPos_1), new Ammo.btTransform(sliderQuat_2, sliderPos_2), true );
+           
+            slider.setLowerLinLimit(-2.0);
+            slider.setUpperLinLimit(2.0);
+
+            physicsWorld.addConstraint( slider, true );
+        }
+
+        function moveBall(){
+            let scalingFactor = 20;
+
+            let moveX = moveDirection.right - moveDirection.left;
+            let moveZ = moveDirection.back - moveDirection.forward;
+            let moveY = 0;
+
+            if (moveX == 0 && moveY == 0 && moveZ == 0) return;
+
+            let resultantImpulse = new Ammo.btVector3(moveX, moveY, moveZ);
+            resultantImpulse.op_mul(scalingFactor);
+
+            let physicsBody = ballObject.userData.physicsBody;
+
+            //projectileObject.userData.physicsBody.setLinearVelocity(resultantImpulse);
+
+            physicsBody.setLinearVelocity(resultantImpulse);
+        }
+
+        function moveKinematic(){
+            let scalingFactor = 0.3;
+
+            let moveX =  kMoveDirection.right - kMoveDirection.left;
+            let moveZ =  kMoveDirection.back - kMoveDirection.forward;
+            let moveY =  0;
+
+            let translateFactor = tmpPos.set(moveX, moveY, moveZ);
+
+            translateFactor.multiplyScalar(scalingFactor);
+
+            kObject.translateX(translateFactor.x);
+            kObject.translateY(translateFactor.y);
+            kObject.translateZ(translateFactor.z);
+
+            kObject.getWorldPosition(tmpPos);
+            kObject.getWorldQuaternion(tmpQuat);
+
+            let physicsBody = kObject.userData.physicsBody;
+
+            let ms = physicsBody.getMotionState();
+            if ( ms ) {
+
+                ammoTmpPos.setValue(tmpPos.x, tmpPos.y, tmpPos.z);
+                ammoTmpQuat.setValue( tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w);
+
+                tmpTrans.setIdentity();
+                tmpTrans.setOrigin( ammoTmpPos ); 
+                tmpTrans.setRotation( ammoTmpQuat ); 
+
+                ms.setWorldTransform(tmpTrans);
+
+            }
+
+        }
+
+        function render(){
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+           
+            deltaTime = clock.getDelta();
+
+            moveBall();
+            moveKinematic();
+          
+            updatePhysics(deltaTime);
+            renderer.render(scene, camera);
+            requestAnimationFrame(render);
+        }
+ 
+       function updatePhysics(deltaTime){
+            physicsWorld.stepSimulation(deltaTime, 10);
+
+            for (let i = 0; i < rigidBodies.length; i++) {
+                
+                let objThree = rigidBodies[ i ];
+                let objAmmo = objThree.userData.physicsBody;
+
+                let ms = objAmmo.getMotionState();
+
+                if (ms) {
+                    ms.getWorldTransform(tmpTrans);
+
+                    let p = tmpTrans.getOrigin();
+                    let q = tmpTrans.getRotation();
+
+                    objThree.position.set(p.x(), p.y(), p.z());
+                    objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+                }
+            }
+       }
+
+    </script>
+    
+</body>
+</html>

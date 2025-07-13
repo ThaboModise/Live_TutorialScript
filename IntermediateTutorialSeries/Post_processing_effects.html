@@ -5,6 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body>
     <script src="../es_module_shims/es_module_shims.js"></script>
@@ -30,6 +37,8 @@
         import { SobelOperatorShader } from "../three.js-master/examples/jsm/shaders/SobelOperatorShader.js";
         import { LuminosityShader } from "../three.js-master/examples/jsm/shaders/LuminosityShader.js";
         import { ColorifyShader } from "../three.js-master/examples/jsm/shaders/ColorifyShader.js";
+        import { OutputPass } from "../three.js-master/examples/jsm/postprocessing/OutputPass.js"; 
+
 
         let object;
     
@@ -53,7 +62,7 @@
         const dotEffect = new ShaderPass(DotScreenShader);
         dotEffect.uniforms["scale"]. value = 2;
 
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight),1, 0.2, 0.1);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight),1.01, 0.1, 0.01);
         
         const luminosityEffect = new ShaderPass(LuminosityShader);
 
@@ -64,14 +73,17 @@
         const colorify = new ShaderPass(ColorifyShader);
         colorify.uniforms["color"].value.setRGB(1,0,0);
 
+        const outputPass = new OutputPass();
+
         composer.addPass(renderPass);
-        composer.addPass(luminosityEffect);
-        composer.addPass(sobelEffect);
-        composer.addPass(colorify);
+        //composer.addPass(luminosityEffect);
+        //composer.addPass(sobelEffect);
+        //composer.addPass(colorify);
 
         //composer.addPass(dotEffect);
 
         composer.addPass(bloomPass);
+        composer.addPass(outputPass);
             
         scene.add(sphereMesh);
         scene.add(pointLight);
