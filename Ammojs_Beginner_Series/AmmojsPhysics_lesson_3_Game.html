@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-weight: bolder;
+            font-family: Poplar Std, Georgia, 'Times New Roman', Times, serif;
+        }
+
+        #main_window{
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 1.0);
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+           
+        }
+
+        #start_screen_img{
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            
+        }
+
+        #start_button{
+            font-size: 50px;
+            background-color: rgb(255, 225, 116);
+            padding: 0px 10px;
+            padding-top: 10px;
+            border-radius: 10px;
+            border: 2px solid white;
+            display: none;
+            position: absolute;
+            top: 76%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        
+        }
+
+        .centered{
+            font-size: 75px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+        }
+
+        .main-win-item{
+            align-self: center;
+            margin: 10px 0;
+        }
+        #cheer{
+            display: none;
+        }
+
+        #game_end{
+            opacity: 1;
+            display: none;
+            animation: gameEnd 2.5s ;
+        }
+
+        #restart{
+            font-size: 50px;
+            background-color: rgb(255, 225, 116);
+            padding: 0px 10px;
+            padding-top: 10px;
+            border-radius: 10px;
+            border: 2px solid white;
+            display: none;
+            animation: restart 3.5s;
+            cursor: pointer;
+        
+        }
+        .thumbs{
+            width: 10%;
+            height:10%; 
+        }
+
+        #thumbsUp{
+            position: absolute;
+            display: none;
+            opacity: 0;
+            animation: well_done 1s ;
+        }
+
+        #thumbsDown{
+            position: absolute;
+            display: none;
+            opacity: 0;
+            animation: badly_done 1s ;
+        }
+
+        #loader_icon {
+            border: 16px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 16px solid #3498db;
+            width: 120px;
+            height: 120px;
+            animation: loading 2s linear infinite;
+        }
+
+        #progress_bar_border{
+            width: 50%;
+            height: 50px;
+            border: 1px solid skyblue;
+        }
+
+        #progress_bar{
+            display: flex;
+            justify-content: center;
+            font-size: large;
+            width: 0;
+            height: 100%;
+            background-color: skyblue; 
+        }
+        #score{
+            display: none;
+            font-size: 50px;
+            position: absolute;
+            top: 30px;
+            left: 50px;
+        }
+
+        #load_percentage{
+          align-self: center;  
+        }
+        #loading_text{
+            color: skyblue;
+        }
+
+        @keyframes loading {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes well_done{
+            0%{top: 50%; opacity: 1.0}
+            100%{top: 45%;opacity: 0}
+        }
+
+        @keyframes badly_done{
+            0%{top: 45%; opacity: 1.0}
+            100%{top: 50%;opacity: 0}
+        }
+
+        @keyframes restart{
+            0%{opacity: 0}
+            100%{opacity: 1.0}
+        }
+
+        @keyframes gameEnd{
+            0%{opacity: 0}
+            100%{opacity: 1.0}
+        }
+    </style>
+</head>
+<body>
+    <audio id="thumbs_up_sound" src="../resources/audio/thumbs_up_3.mp3"></audio>
+    <audio id="thumbs_down_sound" src="../resources/audio/thumbs_down_2.mp3"></audio>
+    <audio id="background_sound" src="../resources/audio/background_sound_melody_2.mp3"></audio>
+    <audio id="game_end_success" src="../resources/audio/game_end_success_2.mp3"></audio>
+    <audio id="game_end_failure" src="../resources/audio/game_end_failure_2.mp3"></audio>
+
+    <div id="main_window" class="centered" >
+        <div id="progress_bar_border" class="main-win-item" >
+            <div id="progress_bar" ><span id="load_percentage"></span></div>
+        </div>
+        <span class="main-win-item" id="loading_text">..Loading..</span>
+
+        <img id="start_screen_img" src="../resources/images/dropship_startscreen.jpg" alt="">
+        <span class="main-win-item" id="start_button">Press Start</span>
+        <span class="main-win-item" id="cheer">Great</span>
+        <span id="score">SCORE:</span>
+        <span class="main-win-item" id="game_end"></span>
+        <span class="main-win-item" id="restart">Restart</span>
+        <img class="main-win-item thumbs" id="thumbsUp" src="../resources/images/thumbs_up_icon.svg" alt="">
+        <img class="main-win-item thumbs" id="thumbsDown" src="../resources/images/thumbs_down_icon.svg" alt="">
+    </div>
+    <div id ="container"></div>
+
+    <script src="../es_module_shims/es_module_shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../three.js-master/build/three.module.js",
+                "three/addons/": "../three.js-master/examples/jsm/"
+            }
+        }
+    </script>
+
+    <canvas id="canvas"></canvas>
+    <script src="../three.js-master/examples/jsm/libs/ammo.wasm.js"></script>
+    <script type="module">
+        import * as THREE from "../three.js-master/build/three.module.js";
+        import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+        let renderer, scene, camera, ambiLight, deltaTime, clock, planePos;
+        let staticBodiesArray = [], rigidBodies = [];
+
+        let solver, dispatcher, broadphase, tmpTrans, physicsWorld;
+        
+        const STATE = {DISABLE_DEACTIVATION: 4};
+        const FLAGS = {CF_KINEMATIC_OBJECT: 2};
+       
+        let tmpQuat = new THREE.Quaternion();
+        
+        let blockObj, p2p, planeGrp, propeller, boxGrp, ground;
+        let packageBox3, dropBox3, groundBox3, deliveredBox3, boxPackage = null;
+
+        const planeGrpPos = new THREE.Vector3();
+        const fixedNumOfPackages = 3;
+        let numOfBoxPackages = fixedNumOfPackages;
+        let numOfSuccessfulDrops = 0;
+        const packageAvarage = fixedNumOfPackages / 2;
+
+        thumbs_up_sound.load();
+        thumbs_down_sound.load();
+        background_sound.load();
+        game_end_success.load();
+        game_end_failure.load();
+        thumbs_up_sound.volume = 0.2;
+        thumbs_down_sound.volume = 0.4;
+        background_sound.volume = 0.5;
+        game_end_success.volume = 0.5;
+        game_end_failure.volume = 0.5;
+        score.textContent = `SCORE: ${numOfSuccessfulDrops} / ${fixedNumOfPackages}`;
+        const gameState = {gamePlayOn: false};
+
+        Ammo().then(start);
+        
+        function start(){
+            tmpTrans = new Ammo.btTransform();
+
+            setPhysics();
+            setGraphics();
+            window.addEventListener("mousedown", onMouseClick, false);
+            render();
+        }
+
+        function setPhysics(){
+            let collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+            dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+            solver = new Ammo.btSequentialImpulseConstraintSolver();
+            broadphase = new Ammo.btDbvtBroadphase();
+
+            physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+            physicsWorld.setGravity(new Ammo.btVector3(0, -9, 0));
+        }
+
+        function setGraphics(){
+            clock = new THREE.Clock();
+          
+            renderer = new THREE.WebGLRenderer({antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            container.appendChild(renderer.domElement);
+           
+            scene = new THREE.Scene();
+            
+            scene.background = new THREE.Color(0x00bbff);
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 1.0, 1000 );
+            ambiLight = new THREE.AmbientLight();
+            scene.add(ambiLight);
+            
+            function windowResize(){
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            window.addEventListener("resize", windowResize);
+
+            restart.addEventListener("click", (evt)=>{
+                evt.preventDefault();
+                window.location.reload();
+            })
+
+            const manager = new THREE.LoadingManager();
+            manager.onLoad = startScreen;
+            const gltfLoader = new GLTFLoader(manager);
+
+            manager.onProgress = (url, itemsLoaded, itemsTotal)=>{
+                progress_bar.style.width = `${itemsLoaded / itemsTotal * 100 | 0 }%`;
+                load_percentage.textContent = progress_bar.style.width;
+            }
+
+            gltfLoader.load("../resources/scenes/game_env_test_1.gltf",(gltf)=>{
+                
+                gltf.scene.traverse((obj)=>{
+                   
+                    if (obj.isMesh && obj.name !== "ground") {
+                        obj.castShadow = true;
+                        obj.receiveShadow = true;
+                    }
+                    if (obj.isMesh && obj.name === "ground") {
+                        obj.receiveShadow = true;
+                    }
+
+                })
+                scene.add(gltf.scene);
+            })
+          
+            camera.position.y = 1;
+            camera.position.z = 50;
+            const camDir = new THREE.Vector3(0, 25, -1);
+            camera.lookAt(camDir);
+        }
+
+         function startScreen(){
+            loading_text.style.display = "none";
+            progress_bar_border.style.display = "none";
+
+            start_screen_img.style.display = "block";
+            start_button.style.display =  "initial";
+
+            start_button.addEventListener("click", importedAssets);
+            
+        }
+
+        function importedAssets(){
+            gameState.gamePlayOn = true;
+            start_screen_img.style.display = "none";
+            start_button.style.display =  "none";
+
+            score.style.display = "initial";
+
+            main_window.style.backgroundColor = "rgba(255, 255, 255, 0.0)";
+
+            const box_1 = scene.getObjectByName("box_1_base");
+            const dirLight = scene.getObjectByName("DirectionalLight");
+            dirLight.castShadow = true;
+            dirLight.target = scene;
+            dirLight.intensity = 1;
+            dirLight.shadow.bias = -0.001;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 0.1;
+            dirLight.shadow.camera.far = 500.0;
+            dirLight.shadow.camera.left = 50;
+            dirLight.shadow.camera.right = -50;
+            dirLight.shadow.camera.top = 50;
+            dirLight.shadow.camera.bottom = -50;
+            dirLight.shadow.radius = 3.0;
+            const ambientLight = scene.getObjectByName("AmbientLight");
+            ambientLight.intensity = 0;
+            planeGrp = scene.getObjectByName("plane_grp");
+            
+            boxGrp = scene.getObjectByName("box_grp");
+            staticBodiesArray.push(boxGrp);
+           
+            dropBox3 = new THREE.Box3();
+            dropBox3.name = "drop_box";
+            dropBox3.setFromObject(boxGrp);
+            dropBox3.objThree = boxGrp;
+
+            propeller = scene.getObjectByName("propeller_grp");
+            ground = scene.getObjectByName("ground");
+            groundBox3 = new THREE.Box3();
+            groundBox3.setFromObject(ground);
+            staticBodiesArray.push(ground);
+
+            boxes(staticBodiesArray);
+        }
+
+        function boxes(arr){
+            const sideBoxes = [];
+            let baseBox;
+            const mass = 0;
+
+            // Initiate side boxes rigid bodies
+            let box3 = new THREE.Box3();
+            let objScale;
+            let objQuat = {x: 0, y: 0, z: 0, w: 1}; 
+            let objPos, transform, ms, localInertia, rbInfo, body;
+            
+            arr.map((obj)=>{
+                if(obj.name === "box_grp"){
+                    obj.children.map((item)=>{
+                        if(item.name.search("side") > -1){
+                            item.geometry.computeBoundingBox();
+                            sideBoxes.push(item)
+                        };
+                        if(item.name.search("base") > -1){
+                            item.geometry.computeBoundingBox();
+                            baseBox = item;
+                        }
+                    });
+
+                    sideBoxes.map((item)=>{
+            
+                        box3.setFromObject(item);
+                        objScale = box3.getSize(new THREE.Vector3());
+                        
+                        objPos = item.getWorldPosition(new THREE.Vector3);
+                        
+                        //const boxHelper = new THREE.Box3Helper(box3, Math.random() * 0xffffff);
+                        //scene.add(boxHelper);
+
+                        transform = new Ammo.btTransform();
+                        transform.setIdentity();
+                        transform.setOrigin(new Ammo.btVector3(objPos.x, objPos.y, objPos.z));
+                        transform.setRotation(new Ammo.btQuaternion(objQuat.x, objQuat.y, objQuat.z, objQuat.w));
+
+                        ms = new Ammo.btDefaultMotionState(transform);
+
+                        const sideColShape = new Ammo.btBoxShape(new Ammo.btVector3(objScale.x * 0.5, objScale.y * 0.5, objScale.z * 0.5));
+                        sideColShape.setMargin(0.1);
+
+                        localInertia = new Ammo.btVector3(0, 0, 0);
+                        sideColShape.calculateLocalInertia(mass, localInertia);
+
+                        rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, ms, sideColShape, localInertia);
+                        body = new Ammo.btRigidBody(rbInfo);
+
+                        item.userData.tag = item.name;
+                        body.threeObject = item;
+
+                        physicsWorld.addRigidBody(body);
+                        
+                    }); 
+
+                    // Base box rigid body setup
+                    box3.setFromObject(baseBox);
+                    objScale = box3.getSize(new THREE.Vector3());
+                    const baseColShape = new Ammo.btBoxShape(new Ammo.btVector3(objScale.x * 0.5, objScale.y * 0.5, objScale.z * 0.5));
+                    baseColShape.setMargin(0.1);
+                    
+                    objPos = baseBox.getWorldPosition(new THREE.Vector3);
+                    
+                    const boxHelper = new THREE.Box3Helper(box3, Math.random() * 0xffffff);
+                    scene.add(boxHelper);
+
+                    transform = new Ammo.btTransform();
+                    transform.setIdentity();
+                    transform.setOrigin(new Ammo.btVector3(objPos.x, objPos.y, objPos.z));
+                    transform.setRotation(new Ammo.btQuaternion(objQuat.x, objQuat.y, objQuat.z, objQuat.w));
+
+                    ms = new Ammo.btDefaultMotionState(transform);
+
+                    localInertia = new Ammo.btVector3(0, 0, 0);
+                    baseColShape.calculateLocalInertia(mass, localInertia);
+
+                    rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, ms, baseColShape, localInertia);
+                    body = new Ammo.btRigidBody(rbInfo);
+
+                    baseBox.userData.tag = "drop_box";
+                    body.threeObject = baseBox;
+
+                    physicsWorld.addRigidBody(body);
+                }
+
+                if (obj.name === "ground") {
+                   //Ground rigid body setup
+                    box3.setFromObject(ground);
+                    objScale = box3.getSize(new THREE.Vector3());
+                    const groundShape = new Ammo.btBoxShape(new Ammo.btVector3(objScale.x * 0.5, objScale.y * 0.5, objScale.z * 0.5));
+                    groundShape.setMargin(0.05);
+                    
+                    objPos = ground.getWorldPosition(new THREE.Vector3);
+                   
+                    transform = new Ammo.btTransform();
+                    transform.setIdentity();
+                    transform.setOrigin(new Ammo.btVector3(objPos.x, objPos.y, objPos.z));
+                    transform.setRotation(new Ammo.btQuaternion(objQuat.x, objQuat.y, objQuat.z, objQuat.w));
+
+                    ms = new Ammo.btDefaultMotionState(transform);
+
+                    localInertia = new Ammo.btVector3(0, 0, 0);
+                    groundShape.calculateLocalInertia(mass, localInertia);
+
+                    rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, ms, groundShape, localInertia);
+                    body = new Ammo.btRigidBody(rbInfo);
+
+                    ground.userData.tag = ground.name;
+                    body.threeObject = ground;
+
+                    physicsWorld.addRigidBody(body); 
+                }
+            });
+        }
+
+
+        function onMouseClick(){
+            
+            if (gameState.gamePlayOn === true && blockObj.name !== "delivered") {
+                physicsWorld.removeConstraint(blockObj.userData.constraint);
+                Ammo.destroy(blockObj.userData.constraint); 
+            } 
+        }
+
+        function createConstraintObject(){
+
+            planePos = planeGrp.position.clone();
+            let radius = 1;
+            let scale = {x: 1, y: 1, z: 1};
+            let quat = {x: 0, y: 0, z: 0, w: 1};
+            
+            let mass2 = 2;
+
+            let transform = new Ammo.btTransform();
+
+            //Block Graphics
+            let block = blockObj = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshLambertMaterial({emissive: 0xe3c38d, color: 0x2e2920}));
+            block.castShadow = true;
+            packageBox3 = new THREE.Box3();
+            packageBox3.setFromObject(block);
+            
+            block.position.set(planePos.x, planePos.y, planePos.z);
+            block.scale.set(scale.x, scale.y, scale.z);
+
+            block.castShadow = true;
+            block.receiveShadow = true;
+
+            scene.add(block);
+
+            //Block Physics
+            transform.setIdentity();
+            transform.setOrigin( new Ammo.btVector3( planePos.x, planePos.y, planePos.z ) );
+            transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+            let motionState = new Ammo.btDefaultMotionState( transform );
+
+            let blockColShape = new Ammo.btBoxShape( new Ammo.btVector3( scale.x * 0.5, scale.y * 0.5, scale.z * 0.5 ) );
+            blockColShape.setMargin( 0.05 );
+
+            let localInertia = new Ammo.btVector3( 0, 0, 0 );
+            blockColShape.calculateLocalInertia( mass2, localInertia );
+
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass2, motionState, blockColShape, localInertia );
+            let blockBody = new Ammo.btRigidBody( rbInfo );
+            blockBody.setActivationState(STATE.DISABLE_DEACTIVATION);
+            blockBody.setDamping(0.1, 0.1);
+
+            physicsWorld.addRigidBody( blockBody);
+            
+            block.userData.physicsBody = blockBody;
+            block.name = "package";
+            blockBody.threeObject = block;
+            rigidBodies.push(block);
+
+            //Create Joints
+            let spherePivot = new Ammo.btVector3( 0, - radius, 0 );
+            let blockPivot = new Ammo.btVector3( 0, 1, 0 );
+
+            p2p = new Ammo.btPoint2PointConstraint(blockBody, blockPivot);
+            physicsWorld.addConstraint( p2p, false );
+            block.userData.constraint = p2p;
+            
+            return block;
+        }
+
+        function render(){
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            deltaTime = clock.getDelta();
+
+            updatePhysics(deltaTime);
+
+            if (gameState.gamePlayOn === true) {
+                //Speed up after passing marker
+                
+                
+                if (planeGrp.position.x < -15 && blockObj.userData ) {
+                    planeGrp.position.x *= 1.01;
+                }
+                
+
+                if(numOfBoxPackages > 0){
+                    background_sound.play();
+                    
+                    if(boxPackage !== null && planeGrp.position.x < -50){
+                        
+                        thumbsUp.style.display = "none";
+                        thumbsDown.style.display = "none";
+                        planeGrp.position.copy(planePos); 
+                        boxPackage = null; 
+                    }  
+                }
+                
+                if (boxPackage === null && planeGrp) {
+
+                    for (let i = 0; i < 1; i++) {
+                        
+                        boxPackage = createConstraintObject();
+                        numOfBoxPackages --;
+                    }
+                }
+
+                if(planeGrp){
+                    
+                    if(boxPackage !== null ){
+                        planeGrp.position.x -= 0.1;
+                        propeller.rotation.z += 0.5;
+                    }
+                
+                    const planePos = planeGrp.position.clone();
+                    p2p.setPivotB(new Ammo.btVector3(planePos.x, planePos.y + 0.25, planePos.z));
+                }
+            }
+        
+            
+            renderer.render(scene, camera);
+            requestAnimationFrame(render);
+        }
+
+        function updatePhysics(deltaTime){
+
+            physicsWorld.stepSimulation(deltaTime, 10);
+
+            for (let i = 0; i < rigidBodies.length; i++) {
+                
+                let objThree = rigidBodies[ i ];
+                let objAmmo = objThree.userData.physicsBody;
+
+                let ms = objAmmo.getMotionState();
+
+                if (ms) {
+                    ms.getWorldTransform(tmpTrans);
+
+                    let p = tmpTrans.getOrigin();
+                    let q = tmpTrans.getRotation();
+
+                    objThree.position.set(p.x(), p.y(), p.z());
+                    objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+                }
+
+                if (objThree.name === "delivered") {
+                    deliveredBox3 = new THREE.Box3();
+                    deliveredBox3.setFromObject(objThree);
+                }
+                    
+                if(objThree.name === "package"){
+                    packageBox3.setFromObject(objThree);
+                    dropBox3.setFromObject(boxGrp);
+
+                    if(dropBox3.containsBox(packageBox3)){
+                        
+                        thumbs_up_sound.play();
+                        numOfSuccessfulDrops += 1;
+                        score.textContent += ` ${numOfSuccessfulDrops} / ${fixedNumOfPackages}`;
+
+                        thumbsUp.style.display = "block";
+                        
+                        objThree.name = "delivered";
+                        score.textContent = ` SCORE: ${numOfSuccessfulDrops} / ${fixedNumOfPackages}`;
+                        if (numOfBoxPackages <= 0 ) {
+                            gameState.gamePlayOn = false;
+                        }
+                    }
+                    else if(groundBox3.intersectsBox(packageBox3)){
+                        
+                        thumbs_down_sound.play();
+                        thumbsDown.style.display = "block";
+                        objThree.name = "delivered";
+                        if (numOfBoxPackages <= 0 ) {
+                            gameState.gamePlayOn = false;
+                        }
+                    }
+
+                    else if( deliveredBox3 && deliveredBox3.intersectsBox(packageBox3)){
+                        thumbs_down_sound.play();
+                        thumbsDown.style.display = "block";
+                        objThree.name = "delivered";
+                        if (numOfBoxPackages <= 0 ) {
+                            gameState.gamePlayOn = false;
+                        }
+                    }
+
+                    else{
+
+                        if (boxPackage !== null && planeGrp.position.x < -45) {
+                            thumbs_down_sound.play();
+                            thumbsDown.style.display = "block";
+                            physicsWorld.removeConstraint(objThree.userData.constraint);
+                            physicsWorld.removeCollisionObject(objAmmo);
+                            const rbShape = objAmmo.getCollisionShape();
+                            const rbMS = objAmmo.getMotionState();
+                            Ammo.destroy(objAmmo);
+                            
+                            if(rbShape) Ammo.destroy(rbShape);
+                            if(rbMS) Ammo.destroy(rbMS);
+                            objThree.name = "undelivered";
+                            rigidBodies.splice(i, 1);
+
+                            if (numOfBoxPackages <= 0 ) {
+                                gameState.gamePlayOn = false;
+                            }
+                        }
+                        
+                    }
+
+                    if (!gameState.gamePlayOn && numOfSuccessfulDrops > packageAvarage ) {
+                       
+                        setTimeout(() => {
+                            background_sound.pause();
+                            game_end_success.play();
+
+                            game_end.textContent = " Game Finished";
+                            game_end.style.display = "block"; 
+                            restart.style.display = "block";
+                            main_window.style.transition = "1s";
+                            main_window.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
+                        }, 2000);
+                        
+                    }
+
+                    if(!gameState.gamePlayOn && numOfSuccessfulDrops < packageAvarage){
+                        setTimeout(() => {
+                            background_sound.pause();
+                            game_end_failure.play();
+
+                            game_end.textContent = " Game Over";
+                            game_end.style.display = "block";
+                            restart.style.display = "block";
+                            main_window.style.transition = "0.5s";
+                            main_window.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
+                        }, 2000);
+                    }
+                }
+            }
+            
+        }
+
+        
+       
+
+    </script>
+    
+</body>
+</html>
